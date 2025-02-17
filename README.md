@@ -102,6 +102,8 @@ Implémenter une gestion centralisée des erreurs et un mécanisme de logging po
   - Les règles de gestion des droits d'accès.
   - Les instructions pour lancer l'application et exécuter les tests.
 
+Vous êtes libre d'installer les dépendances supplémentaires que vous jugerez utiles (à l'exception des bibliothèques de gestion des droits d'accès).
+
 ## Livrables
 - Le code source de l'API dans un dépôt Git (GitHub, GitLab, etc.).
 - Un fichier `README.md` détaillant :
