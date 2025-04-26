@@ -1,7 +1,7 @@
 import { createRoute } from '@hono/zod-openapi'
-import { Tags } from '../constant.js'
-import { analysesResponseSchema, analysisResponseSchema, postAnalysisResponseSchema } from './schemas/response.js'
-import { getAnalysesQuerySchema, getAnalysisQuerySchema, postAnalysisBodySchema } from './schemas/request.js'
+import { Tags } from '@/constant'
+import { analysesResponseSchema, analysisResponseSchema, postAnalysisResponseSchema } from '@/analyses/schemas/response'
+import { getAnalysesQuerySchema, getAnalysisQuerySchema, postAnalysisBodySchema } from '@/analyses/schemas/request'
 
 
 export const getAnalysesRoute = createRoute({

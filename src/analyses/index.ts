@@ -1,5 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { getAnalysesRoute, getAnalysisRoute, postAnalysisRoute } from './routes.js'
+import { getAnalysesRoute, getAnalysisRoute, postAnalysisRoute } from '@/analyses/routes'
 
 const analysis = new OpenAPIHono()
 
@@ -27,7 +27,7 @@ analysis.openapi(postAnalysisRoute, (c) => {
 
     const body = c.req.valid('json');
     const { analysisId, users } = body
-
+    
     return c.json({
         success: true,
         data: {

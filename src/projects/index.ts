@@ -1,5 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { getProjectRoute, getProjectsRoute, postProjectRoute } from './routes.js'
+import { getProjectRoute, getProjectsRoute, postProjectRoute } from '@/projects/routes'
 
 const project = new OpenAPIHono()
 
