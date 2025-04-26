@@ -15,12 +15,12 @@ export const getAnalysesRoute = createRoute({
     },
     responses: {
         200: {
-        content: {
-            'application/json': {
-            schema: analysesResponseSchema,
+            content: {
+                'application/json': {
+                    schema: analysesResponseSchema,
+                },
             },
-        },
-        description: 'Récupérer toutes les analyses',
+            description: 'Récupérer toutes les analyses',
         },
         401: {
             description: 'Unauthorized',
@@ -39,12 +39,12 @@ export const getAnalysisRoute = createRoute({
     },
     responses: {
         200: {
-        content: {
-            'application/json': {
-            schema: analysisResponseSchema,
+            content: {
+                'application/json': {
+                    schema: analysisResponseSchema,
+                },
             },
-        },
-        description: "Récupérer l'id d'une analyse",
+            description: "Récupérer l'id d'une analyse",
         },
         401: {
             description: 'Unauthorized',
@@ -63,7 +63,7 @@ export const postAnalysisRoute = createRoute({
         body: {
             content: {
                 'application/json': {
-                schema: postAnalysisBodySchema, 
+                    schema: postAnalysisBodySchema,
                 },
             },
             required: true,

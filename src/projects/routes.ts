@@ -17,12 +17,12 @@ export const getProjectsRoute = createRoute({
     summary: 'Récupérer tous les projets',
     responses: {
         200: {
-        content: {
-            'application/json': {
-            schema: projectsResponseSchema,
+            content: {
+                'application/json': {
+                    schema: projectsResponseSchema,
+                },
             },
-        },
-        description: 'Tous les projets trouvés',
+            description: 'Tous les projets trouvés',
         },
         401: {
             description: 'Unauthorized',
@@ -41,12 +41,12 @@ export const getProjectRoute = createRoute({
     summary: 'Trouver un projet par ID',
     responses: {
         200: {
-        content: {
-            'application/json': {
-            schema: projectResponseSchema,
+            content: {
+                'application/json': {
+                    schema: projectResponseSchema,
+                },
             },
-        },
-        description: 'Projet trouvé',
+            description: 'Projet trouvé',
         },
         401: {
             description: 'Unauthorized',
@@ -64,7 +64,7 @@ export const postProjectRoute = createRoute({
         body: {
             content: {
                 'application/json': {
-                schema: postProjectBodySchema, 
+                    schema: postProjectBodySchema,
                 },
             },
             required: true,
@@ -72,12 +72,12 @@ export const postProjectRoute = createRoute({
     },
     responses: {
         200: {
-        content: {
-            'application/json': {
-            schema: postProjectResponseSchema,
+            content: {
+                'application/json': {
+                    schema: postProjectResponseSchema,
+                },
             },
-        },
-        description: 'Projet créé',
+            description: 'Projet créé',
         },
         401: {
             description: 'Unauthorized',
