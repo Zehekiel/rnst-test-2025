@@ -25,3 +25,4 @@ lerna-debug.log*
 db.sqlite3
 
 .history
+dist
