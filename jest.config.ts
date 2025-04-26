@@ -1,9 +1,12 @@
 module.exports = {
   testEnvironment: 'node',
   transform: {
-    "^.+\\.tsx?$": "ts-jest"
+    '^.+\\.tsx?$': ['ts-jest', {
+      useESM: true, // Explicitly use ESM
+      tsconfig: 'tsconfig.json'
+    }],
   },
-  preset: "ts-jest",
+  preset: 'ts-jest/presets/default-esm',
   moduleFileExtensions: [
     "ts",
     "tsx",
@@ -18,6 +21,10 @@ module.exports = {
     'src/**/*.{ts,tsx,js,jsx}',
     '!src/**/*.d.ts',
   ],
+  coveragePathIgnorePatterns: [
+    "/node_modules/",
+    "/.history/"
+],
   moduleNameMapper: {"^@/(.*)$": "<rootDir>/src/$1"},
   testPathIgnorePatterns: [
     "/node_modules/",
