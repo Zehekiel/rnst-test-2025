@@ -1,8 +1,8 @@
 import { serve } from '@hono/node-server'
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { swaggerUI } from '@hono/swagger-ui'
-import analysis from './analyses/index.js';
-import project from './projects/index.js';
+import analysis from '@/analyses/index';
+import project from '@/projects/index';
 
 /**
  * @see https://hono.dev/
