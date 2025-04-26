@@ -13,7 +13,7 @@ export const getProjectsRoute = createRoute({
     path: '/',
     tags:[Tags.project],
 
-    description: 'Récupérer tous les projets dans la base de données accessible par l’utilisateur connecté',
+    description: 'Récupérer tous les projets dans la base de données accessible par l’utilisateur connecté.',
     summary: 'Récupérer tous les projets',
     responses: {
         200: {
@@ -36,7 +36,7 @@ export const getProjectRoute = createRoute({
     request: {
         params: getProjectQuerySchema,
     },
-    description: 'Récupérer un projet dans la base de données accessible par l’utilisateur connecté. Pas besoin de passer le projet ID dans la requête. ',
+    description: 'Récupérer un projet dans la base de données accessible par l’utilisateur connecté.',
     tags: [Tags.project],
     summary: 'Trouver un projet par ID',
     responses: {
