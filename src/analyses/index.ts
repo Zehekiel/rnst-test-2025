@@ -27,7 +27,7 @@ analysis.openapi(postAnalysisRoute, (c) => {
 
     const body = c.req.valid('json');
     const { analysisId, users } = body
-    
+
     return c.json({
         success: true,
         data: {

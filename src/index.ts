@@ -13,12 +13,12 @@ app.route('/', analysis);
 app.route('/projects', project);
 
 app.doc('/doc', {
-  openapi: '3.0.0',
-  info: {
-    version: '1.0.0',
-    title: 'rnst-test',
-    description: 'Documentation API de pour le projet de test RNST',
-  },
+    openapi: '3.0.0',
+    info: {
+        version: '1.0.0',
+        title: 'rnst-test',
+        description: 'Documentation API de pour le projet de test RNST',
+    },
 })
 
 app.get('/ui', swaggerUI({ url: '/doc' }))
@@ -27,6 +27,6 @@ const port = 3000
 console.log(`Server is running on http://localhost:${port}`)
 
 serve({
-  fetch: app.fetch,
-  port
+    fetch: app.fetch,
+    port
 })
