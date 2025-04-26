@@ -23,3 +23,5 @@ lerna-debug.log*
 
 # db
 db.sqlite3
+
+.history

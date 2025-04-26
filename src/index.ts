@@ -1,78 +1,27 @@
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
-import sqlite3 from 'sqlite3'
-
-sqlite3.verbose()
-
-/**
- * @see https://github.com/TryGhost/node-sqlite3/wiki/API
- */
-const db = new sqlite3.Database('db.sqlite3', (error) => {
-  if (error === null) {
-    return
-  }
-  console.error(error)
-})
+import { OpenAPIHono } from '@hono/zod-openapi'
+import { swaggerUI } from '@hono/swagger-ui'
+import analysis from './analyses/index.js';
+import project from './projects/index.js';
 
 /**
  * @see https://hono.dev/
  */
-const app = new Hono()
+const app = new OpenAPIHono()
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
+app.route('/', analysis);
+app.route('/projects', project);
+
+app.doc('/doc', {
+  openapi: '3.0.0',
+  info: {
+    version: '1.0.0',
+    title: 'rnst-test',
+    description: 'Documentation API de pour le projet de test RNST',
+  },
 })
 
-app.get('/projects', (c) => {
-  return c.json([])
-})
-
-app.get('/projects/:projectId', (c) => {
-  const {projectId} = c.req.param()
-
-  return c.json({
-    projectId
-  })
-})
-
-
-app.post('/projects/', async (c) => {
-  const body = await c.req.json()
-
-  console.log(body)
-
-  return c.json({
-    success: true
-  })
-})
-
-//
-
-app.get('/projects/:projectId/analyses', (c) => {
-  const {projectId} = c.req.param()
-
-  return c.json([])
-})
-
-app.get('/projects/:projectId/analyses/:analysisId', (c) => {
-  const {analysisId} = c.req.param()
-
-  return c.json({
-    analysisId
-  })
-})
-
-app.post('/projects/:projectId/analyses', async (c) => {
-  const {projectId} = c.req.param()
-  const body = await c.req.json()
-
-  console.log(body)
-
-  return c.json({
-    success: true
-  })
-})
-
+app.get('/ui', swaggerUI({ url: '/doc' }))
 
 const port = 3000
 console.log(`Server is running on http://localhost:${port}`)
