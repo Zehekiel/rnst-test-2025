@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 // Import types and constants normally
 import { cookieName, secret } from '@/constant';
 import { userTable, roleTable, } from '@/sql/modele';
+import database from '@/database';
 
 // --- Mock Setup ---
 
@@ -53,7 +54,6 @@ jest.doMock('hono/cookie', () => {
     };
 });
 
-
 // --- Test Setup ---
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const databaseRoute = require('@/sql').default;
@@ -86,6 +86,12 @@ describe('SQL Database Routes', () => {
         mockedGetAsync?.mockResolvedValue(undefined); // Default for getAsync
         mockedGetSignedCookie?.mockResolvedValue(undefined); // Default no cookie
     });
+
+    afterAll(() => {
+        // Clear all mocks after all tests
+        jest.clearAllMocks();
+        database.close(); // Close the database connection if needed
+    })
 
     // --- Tests for GET /sql/init ---
     describe('GET /sql/init (getInitSQLRoute)', () => {

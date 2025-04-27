@@ -23,6 +23,10 @@ jest.mock('@/database', () => ({
         // Default mock implementation (can be overridden in tests)
         callback(null, []); // Default empty array
     }),
+    // Mock the 'close' method
+    close: jest.fn((callback: (err?: Error) => void) => {
+        callback(); // Call the callback with no error
+    }),
 }));
 
 // Type assertion for the mocked database functions

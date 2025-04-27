@@ -16,6 +16,10 @@ jest.mock('hono/cookie', () => ({
     getSignedCookie: jest.fn(),
 }));
 
+jest.mock('@/database', () => ({
+    close: jest.fn(), // Mock the close function
+}));
+
 // --- Test Setup ---
 const app = new Hono().route('/users', usersRoute); // Mount the routes
 
@@ -28,6 +32,11 @@ describe('User Routes', () => {
     beforeEach(() => {
         jest.clearAllMocks(); // or jest.resetAllMocks();
     });
+
+    afterAll(() => {
+        // Clear all mocks after all tests
+        jest.clearAllMocks();
+    })
 
     // --- Tests for GET /users/ ---
     describe('GET /users/ (getCurrentDataRoute)', () => {
