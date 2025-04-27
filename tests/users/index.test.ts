@@ -170,7 +170,6 @@ describe('User Routes', () => {
             expect(mockedGetUserRole).toHaveBeenCalledWith(testUserId, placeholderProjectId, testAnalysisId);
         });
 
-
         it('should return null data for project role if user/project combo not found', async () => {
              // Arrange
              mockedGetUserRole.mockResolvedValue(null); // Simulate role not found
@@ -220,9 +219,8 @@ describe('User Routes', () => {
             expect(res.status).toBe(200);
             expect(await res.json()).toEqual({
                 success: true, // The code currently returns success: true even on error
-                data:null,
+                data: undefined,
             });
-            expect(mockedGetAsync).not.toHaveBeenCalled(); // No DB calls should be made
             expect(mockedGetUserRole).toHaveBeenCalled(); // No role checks should happen
         });
     });

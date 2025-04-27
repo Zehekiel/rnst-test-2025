@@ -33,7 +33,7 @@ usersRoute.openapi(getUserRoleRoute, async (c) => {
         })
     } catch  {
         return c.json({
-            success: true,
+            success: false,
             data:  "Aucun ID de projet ou d'analyse fourni",
         }, 500)
     }
