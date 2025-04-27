@@ -16,7 +16,7 @@ connection.use(
     })
 )
 
-connection.get("github", async  (c) => {
+connection.get("/github", async  (c) => {
     const user = c.get('user-github')
     const cookieValue = JSON.stringify({id: user?.id, name: user?.login})
     const cookieOption = {
