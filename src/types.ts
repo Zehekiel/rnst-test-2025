@@ -1,9 +1,7 @@
 // Suppose que vous récupérez ces données de la base de données
 export interface User {
     id: number;
-    username: string;
-    role_id: number;
-    role_name: 'Admin' | 'Manager' | 'Reader'; // Inclure le nom du rôle pour faciliter les vérifications
+    name: string;
 }
 
 export interface Project {
@@ -19,10 +17,10 @@ export interface Analysis {
     owner_id: number;
 }
 
-// Actions possibles
 export type Action =
-    'project:create' | 'project:read' |
-    'analysis:create' | 'analysis:read';
+    'project:create' | 'project:read' | 'project:update' | 'project:delete' |
+    'analysis:create' | 'analysis:read' | 'analysis:update' | 'analysis:delete';
 
-// Ressource possible (peut être null pour les actions de création globale)
 export type Resource = Project | Analysis | null;
+
+export type PermissionLevel = 'read' | 'update' | 'write' | 'delete';

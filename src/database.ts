@@ -7,6 +7,7 @@ sqlite3.verbose()
  */
 const database = new sqlite3.Database('db.sqlite3', (error) => {
     if (error === null) {
+        console.log('Connecté à la base de données SQLite.');
         return
     }
     console.error(error)

@@ -11,13 +11,18 @@ function haveCookie(cookie: { [key: string]: Record<string, unknown> | string | 
 }
 
 export async function checkCookiesMiddleware(c: Context, next: Next) {
+    console.log("checkCookiesMiddleware executed")
 
     const cookie = await getSignedCookie(c, secret)
-    if (haveCookie(cookie)) {
+    const isUrlException= c.req.url.includes("connection") || c.req.url.endsWith("ui") || c.req.url.endsWith("doc")
+    const isHaveCookie = haveCookie(cookie)
+    if (isHaveCookie) {
         await next();
-    } else if (c.req.url.includes("connection") || c.req.url.endsWith("ui") || c.req.url.endsWith("doc")) {
+    } else if (isUrlException) {
         await next();
     } else {
+        console.warn("🚀 ~ checkCookiesMiddleware ~ isHaveCookie:", isHaveCookie)
+        console.warn("🚀 ~ checkCookiesMiddleware ~ isUrlException:", isUrlException)
         return c.json({
             success: false,
             message: "you have to login",

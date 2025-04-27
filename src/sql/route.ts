@@ -43,3 +43,24 @@ export const deleteSQLRoute = createRoute({
         },
     },
 })
+
+export const getCurrentDataRoute = createRoute({
+    method: 'get',
+    path: '/getCurrentUser',
+    tags:[Tags.database],
+    description: 'Obtenir l\'utilisateur actuel via les cookies',
+    summary: 'Obtenir l\'utilisateur actuel',
+    responses: {
+        200: {
+            content: {
+                'application/json': {
+                    schema: initSQlResponseSchema,
+                },
+            },
+            description: 'Base de données supprimée',
+        },
+        401: {
+            description: 'Unauthorized',
+        },
+    },
+})
