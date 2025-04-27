@@ -1,12 +1,7 @@
 import { createRoute } from '@hono/zod-openapi'
 import { getProjectQuerySchema, postProjectBodySchema } from '@/projects/schemas/request'
 import { projectsResponseSchema, projectResponseSchema, postProjectResponseSchema } from '@/projects/schemas/response'
-
-const Tags = {
-    project: 'Projects',
-    analysis: 'Analyses',
-} as const
-
+import { Tags } from '@/constant'
 
 export const getProjectsRoute = createRoute({
     method: 'get',

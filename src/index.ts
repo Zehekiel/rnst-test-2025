@@ -8,10 +8,9 @@ import 'dotenv/config';
 import { getSignedCookie } from 'hono/cookie';
 import { cookieName, secret } from './constant';
 import { checkCookiesMiddleware } from './middleware/cookie';
+import databaseRoute from '@/sql/index';
+import usersRoute from './users';
 
-/**
- * @see https://hono.dev/
- */
 const app = new OpenAPIHono()
 
 app.use(checkCookiesMiddleware)
@@ -19,6 +18,8 @@ app.use(checkCookiesMiddleware)
 app.route('/connection', connection);
 app.route('/', analysis);
 app.route('/projects', project);
+app.route('/database', databaseRoute);
+app.route('/users', usersRoute);
 
 app.doc('/doc', {
     openapi: '3.0.0',
@@ -55,10 +56,12 @@ app.get('/ui', async (c) => {
                         align-items: center;
                         background-color: #100547;
                         padding: 8px 16px;
+                        margin: 0 16px;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
                     }
                     .title {
                         color: white;
-                        width: 100%;
                         font-family: sans-serif
                     }
                     .buttons {
