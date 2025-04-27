@@ -1,6 +1,6 @@
 import { createRoute } from '@hono/zod-openapi'
 import { Tags } from '@/constant'
-import { getAllAnalysisResponseSchema, getAllProjectResponseSchema, initSQlResponseSchema } from './schemas/response'
+import { deleteSQlResponseSchema, getAllAnalysisResponseSchema, getAllProjectResponseSchema, initSQlResponseSchema } from './schemas/response'
 
 export const getInitSQLRoute = createRoute({
     method: 'get',
@@ -33,7 +33,7 @@ export const deleteSQLRoute = createRoute({
         200: {
             content: {
                 'application/json': {
-                    schema: initSQlResponseSchema,
+                    schema: deleteSQlResponseSchema,
                 },
             },
             description: 'Base de données supprimée',
