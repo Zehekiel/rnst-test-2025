@@ -5,6 +5,7 @@ import analysis from '@/analyses/index';
 import project from '@/projects/index';
 import connection from '@/connection/index';
 import 'dotenv/config';
+import { getCookie, getSignedCookie } from 'hono/cookie';
 
 /**
  * @see https://hono.dev/
@@ -25,7 +26,13 @@ app.doc('/doc', {
 })
 
 
-app.get('/ui', (c) => {
+app.get('/ui', async (c) => {
+    if (!process.env.GITHUB_SECRET) {
+        throw new Error("GITHUB_SECRET is not defined")
+    }
+
+    const cookie = await getSignedCookie(c, process.env.GITHUB_SECRET)
+
     return c.html(`
         <html lang="en">
             <head>
@@ -33,9 +40,6 @@ app.get('/ui', (c) => {
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <meta name="description" content="RNEST-Test" />
                 <title>RNEST-Test</title>
-                <script>
-                    // custom script
-                </script>
                 <style>
                     button {
                         background-color: transparent; 
@@ -44,13 +48,32 @@ app.get('/ui', (c) => {
                         border: 0px; 
                         cursor: pointer
                     }
+                    .header {
+                        display: flex;
+                        flex-direction: row;
+                        justify-content: space-between;
+                        align-items: center;
+                        background-color: #100547;
+                        padding: 8px 16px;
+                    }
+                    .title {
+                        color: white;
+                        width: 100%;
+                        font-family: sans-serif
+                    }
+                    .buttons {
+                        display: flex;
+                        flex-direction: row;
+                        gap: 16px;
+                        align-items: center;
+                    }
                 </style>
-                <div style="align-items: space-between; display: flex; flex-direction: row; background-color: #100547; margin-bottom: -16px">
-                    <h1 style="color: white; width: 100%; margin-left: 16px;font-family: sans-serif">RNEST-Test</h1>
-                    <div style="display: flex; flex-direction: row; gap: 16px; margin-right: 16px; align-items: center;">
+                <div class="header">
+                    <h1 class="title" >RNEST-Test</h1>
+                    <div class="buttons">
                         <button onclick="window.location.href='/doc'">Documentation</button>
                         <button onclick="window.location.href='/ui'">Swagger</button>
-                        <button onclick="window.location.href='/connection/github'">Connexion à Github</button>
+                        <button id="connectionButton" onclick="window.location.href='/connection/github'">${cookie.rnest_user ? "Connecté" : "Connexion"}</button>
                     </div>
                 </div>
             </head>

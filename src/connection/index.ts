@@ -1,7 +1,6 @@
 import { githubAuth } from '@hono/oauth-providers/github'
-import { OpenAPIHono } from '@hono/zod-openapi'
-import { getGithubRoute } from './route'
 import { Hono } from 'hono'
+import {setSignedCookie} from 'hono/cookie'
 
 const connection = new Hono()
 
@@ -16,10 +15,15 @@ connection.use(
     })
 )
 
-connection.get("github", (c) => {
-    const token = c.get('token')
+connection.get("github", async  (c) => {
     const user = c.get('user-github')
-    
+    const cookieName = 'rnest_user'
+    const cookieValue = JSON.stringify({id: user?.id, name: user?.login})
+    if (process.env.GITHUB_SECRET === undefined) {
+        throw new Error("GITHUB_SECRET is not defined")
+    }
+    await setSignedCookie(c, cookieName, cookieValue, process.env.GITHUB_SECRET)
+
     return c.redirect("/ui")
 })
 
