@@ -12,6 +12,7 @@ let mockDbRun: jest.Mock;
 let mockDbSerialize: jest.Mock;
 let mockDbGet: jest.Mock; // Mock for the 'get' method if needed by getAsync mock
 let mockedGetAsync: jest.Mock;
+let mockedAllAsync: jest.Mock;
 let mockedGetSignedCookie: jest.Mock;
 
 // 2. Use jest.doMock for the database (doesn't hoist)
@@ -34,9 +35,11 @@ jest.doMock('@/database', () => {
 // 3. Mock other dependencies (can often use jest.mock here, but doMock is safer if unsure)
 jest.doMock('@/helper', () => {
     mockedGetAsync = jest.fn();
+    mockedAllAsync = jest.fn();
     return {
         __esModule: true,
         getAsync: mockedGetAsync,
+        allAsync: mockedAllAsync,
     };
 });
 
@@ -239,7 +242,7 @@ describe('SQL Database Routes', () => {
         it('should return all projects successfully', async () => {
             // Arrange
             const mockProjects = [{ id: 1, name: 'Project Alpha', owner_id: 1 }, { id: 2, name: 'Project Beta', owner_id: 2 }];
-            mockedGetAsync.mockResolvedValue(mockProjects);
+            mockedAllAsync.mockResolvedValue(mockProjects);
 
             // Act
             const res = await app.request('/sql/projects');
@@ -251,12 +254,12 @@ describe('SQL Database Routes', () => {
                 data: mockProjects,
             });
             // Verify the helper was called correctly
-            expect(mockedGetAsync).toHaveBeenCalledWith('SELECT * FROM projects');
+            expect(mockedAllAsync).toHaveBeenCalledWith('SELECT * FROM projects');
         });
 
         it('should return empty data array if no projects exist', async () => {
             // Arrange
-            mockedGetAsync.mockResolvedValue([]); // Simulate empty result set
+            mockedAllAsync.mockResolvedValue([]); // Simulate empty result set
 
             // Act
             const res = await app.request('/sql/projects');
@@ -267,13 +270,13 @@ describe('SQL Database Routes', () => {
                 success: true,
                 data: [],
             });
-            expect(mockedGetAsync).toHaveBeenCalledWith('SELECT * FROM projects');
+            expect(mockedAllAsync).toHaveBeenCalledWith('SELECT * FROM projects');
         });
 
         it('should handle errors during project fetch and return 500', async () => {
             // Arrange
             const fetchError = new Error('Failed to fetch projects');
-            mockedGetAsync.mockRejectedValue(fetchError);
+            mockedAllAsync.mockRejectedValue(fetchError);
 
             // Act
             const res = await app.request('/sql/projects');
@@ -282,7 +285,7 @@ describe('SQL Database Routes', () => {
             expect(res.status).toBe(500);
             // Check response body if Hono error handling provides one
             // expect(await res.text()).toContain('Failed to fetch projects');
-            expect(mockedGetAsync).toHaveBeenCalledWith('SELECT * FROM projects');
+            expect(mockedAllAsync).toHaveBeenCalledWith('SELECT * FROM projects');
         });
     });
 
@@ -299,7 +302,7 @@ describe('SQL Database Routes', () => {
             ];
             // Note: The original code uses getAsync<User>, which is likely a typo.
             // The mock should resolve with the expected data structure (analyses).
-            mockedGetAsync.mockResolvedValue(mockAnalyses);
+            mockedAllAsync.mockResolvedValue(mockAnalyses);
 
             // Act
             const res = await app.request('/sql/analyses');
@@ -310,12 +313,12 @@ describe('SQL Database Routes', () => {
                 success: true,
                 data: mockAnalyses,
             });
-            expect(mockedGetAsync).toHaveBeenCalledWith('SELECT * FROM analyses');
+            expect(mockedAllAsync).toHaveBeenCalledWith('SELECT * FROM analyses');
         });
 
         it('should return empty data array if no analyses exist', async () => {
             // Arrange
-            mockedGetAsync.mockResolvedValue([]);
+            mockedAllAsync.mockResolvedValue([]);
 
             // Act
             const res = await app.request('/sql/analyses');
@@ -326,20 +329,20 @@ describe('SQL Database Routes', () => {
                 success: true,
                 data: [],
             });
-            expect(mockedGetAsync).toHaveBeenCalledWith('SELECT * FROM analyses');
+            expect(mockedAllAsync).toHaveBeenCalledWith('SELECT * FROM analyses');
         });
 
         it('should handle errors during analysis fetch and return 500', async () => {
             // Arrange
             const fetchError = new Error('Failed to fetch analyses');
-            mockedGetAsync.mockRejectedValue(fetchError);
+            mockedAllAsync.mockRejectedValue(fetchError);
 
             // Act
             const res = await app.request('/sql/analyses');
 
             // Assert
             expect(res.status).toBe(500);
-            expect(mockedGetAsync).toHaveBeenCalledWith('SELECT * FROM analyses');
+            expect(mockedAllAsync).toHaveBeenCalledWith('SELECT * FROM analyses');
         });
     });
 });

@@ -21,8 +21,6 @@ export async function checkCookiesMiddleware(c: Context, next: Next) {
     } else if (isUrlException) {
         await next();
     } else {
-        console.warn("🚀 ~ checkCookiesMiddleware ~ isHaveCookie:", isHaveCookie)
-        console.warn("🚀 ~ checkCookiesMiddleware ~ isUrlException:", isUrlException)
         return c.json({
             success: false,
             message: "you have to login",

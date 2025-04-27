@@ -1,8 +1,8 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { getCurrentDataRoute, getUserRoleRoute } from './route'
+import { getCurrentDataRoute, getUserAuthorizationRoute, getUserRoleRoute } from './route'
 import { getSignedCookie } from 'hono/cookie';
 import { cookieName, secret } from '@/constant';
-import { getAsync } from '@/helper';
+import { getAsync, getUserRole, isUserAnalyseOwner, isUserProjectOwner } from '@/helper';
 import { User, UserRole } from '@/types';
 
 const usersRoute = new OpenAPIHono()
@@ -11,7 +11,6 @@ usersRoute.openapi(getCurrentDataRoute, async (c) => {
     const cookie = await getSignedCookie(c, secret)
     const user = cookie[cookieName] || '{}'
     const userId = JSON.parse(user).id
-    // sql to get 
     const sql = 'SELECT * FROM users WHERE id = ?';
     const userData = await getAsync<User>(sql, [userId]);
 
@@ -26,26 +25,73 @@ usersRoute.openapi(getUserRoleRoute, async (c) => {
     const analysisId = c.req.param('analysisId')
     const userId = c.req.param('userId')
 
-    if (projectId !== "{projectId}") {
-        // return only the project role with Join
-        const projectSql =`
-            SELECT
-                r.name AS role_name
-            FROM
-                rights_project rp
-            JOIN
-                roles r ON rp.role_id = r.id
-            WHERE
-                rp.user_id = ? AND rp.project_id = ?;
-        `;
-        const userRole = await getAsync<UserRole>(projectSql, [userId, projectId]);
+    try {
+        const userRole = await getUserRole(userId, projectId, analysisId);
         return c.json({
             success: true,
-            data:  userRole?.role_name,
+            data:  userRole,
+        })
+    } catch  {
+        return c.json({
+            success: true,
+            data:  "Aucun ID de projet ou d'analyse fourni",
+        }, 500)
+    }
+})
+
+usersRoute.openapi(getUserAuthorizationRoute    , async (c) => {
+    const projectId = c.req.param('projectId')
+    const analysisId = c.req.param('analysisId')
+    const userId = c.req.param('userId')
+    const action = c.req.param('action')
+
+    let hasPermission = false
+
+    const userRole = await getUserRole(userId, projectId, analysisId);
+
+    if (userRole === "admin") {
+        return c.json({
+            success: true,
+            data:  true,
+        })
+    }
+
+    if (projectId !== "{projectId}") {
+        const isOwner = await isUserProjectOwner(userId, projectId);
+        if (isOwner) {
+            return c.json({
+                success: true,
+                data:  true,
+            })
+        }
+
+        // return only the project role with Join
+        const projectAuthSql =`
+            SELECT EXISTS (
+                SELECT 1
+                FROM rights_project rp
+                JOIN project_policies pp ON rp.role_id = pp.role_id AND rp.project_id = pp.project_id
+                WHERE rp.user_id = ? AND rp.project_id = ? AND pp.permission_level = ?
+            ) AS has_permission;
+        `;
+        const result = await getAsync<{ has_permission: 0 | 1 }>(projectAuthSql, [userId, projectId, action]);
+        hasPermission = !!result?.has_permission; // Convertit 0/1 en false/true
+        return c.json({
+            success: true,
+            data:  hasPermission,
         })
     }
 
     if (analysisId !== "{analysisId}") {
+        const isOwner = await isUserAnalyseOwner(userId, analysisId);
+        if (isOwner) {
+            return c.json({
+                success: true,
+                data:  true,
+            })
+        }
+
+
         const analyseSql = `
             SELECT
                 r.name AS role_name
@@ -62,6 +108,8 @@ usersRoute.openapi(getUserRoleRoute, async (c) => {
             data:  userRole?.role_name,
         })
     }
+
+    // Si aucun ID de projet ou d'analyse n'est fourni
 
     return c.json({
         success: true,

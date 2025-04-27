@@ -13,3 +13,8 @@ export const getUserRoleResponseSchema = z.object({
     success: z.boolean(),
     data: z.string().describe("Rôle de l'utilisateur pour le projet ou l'analyse"),
 });
+
+export const getUserAuthorizationResponseSchema = z.object({
+    success: z.boolean(),
+    data: z.boolean().describe("Autorisation de l'utilisateur pour l'action demandée"),
+});

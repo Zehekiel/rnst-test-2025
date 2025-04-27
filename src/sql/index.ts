@@ -4,8 +4,8 @@ import database from '@/database';
 import { analysisPolicyTable,rightsProjectTable, rightsAnalysisTable,analysisTable, projectPolicyTable, projectTable, roleTable, userTable } from '@/sql/modele';
 import { getSignedCookie } from 'hono/cookie';
 import { cookieName, secret } from '@/constant';
-import { getAsync } from '../helper';
-import { User } from '@/types';
+import { allAsync } from '../helper';
+import { Analysis, Project } from '@/types';
 
 const databaseRoute = new OpenAPIHono()
 
@@ -39,16 +39,23 @@ databaseRoute.openapi(getInitSQLRoute, async (c) => {
         database.serialize(() => {
             // Create the current user as admin
             database.run(`INSERT INTO users (id, name) VALUES (${userId}, '${userName}')`);
+            database.run(`INSERT INTO users (id, name) VALUES (2, 'Manager')`);
+            database.run(`INSERT INTO users (id, name) VALUES (3, 'Reader')`);
+            database.run(`INSERT INTO users (id, name) VALUES (4, 'Admin')`);
         })
 
         database.serialize(() => {
-            // Create a project for the current user
+            // Create different projects
             database.run(`INSERT INTO projects (id, name, owner_id) VALUES (1, 'Projet 1', ${userId})`);
+            database.run(`INSERT INTO projects (id, name, owner_id) VALUES (2, 'Projet 2', 2)`);
+            database.run(`INSERT INTO projects (id, name, owner_id) VALUES (3, 'Projet 3', 3)`);
         })
 
         database.serialize(() => {
-            // Create a analyse for the current user
+            // Create different analysis
             database.run(`INSERT INTO analyses (id, name, owner_id, project_id) VALUES (1, 'Analyse 1', ${userId}, 1)`);
+            database.run(`INSERT INTO analyses (id, name, owner_id, project_id) VALUES (2, 'Analyse 2', 2, 2)`);
+            database.run(`INSERT INTO analyses (id, name, owner_id, project_id) VALUES (3, 'Analyse 3', 3, 3)`);
         })
 
         database.serialize(() => {
@@ -57,6 +64,13 @@ databaseRoute.openapi(getInitSQLRoute, async (c) => {
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'read')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'update')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'delete')`);
+            // Add project policies for manager
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (2, 2, 'write')`);
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (2, 2, 'read')`);
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (2, 2, 'update')`);
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (2, 2, 'delete')`);
+            // Add project policies for reader
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (3, 3, 'read')`);
         })
 
         database.serialize(() => {
@@ -65,16 +79,28 @@ databaseRoute.openapi(getInitSQLRoute, async (c) => {
             database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (0, 1, 'read')`);
             database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (0, 1, 'update')`);
             database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (0, 1, 'delete')`);
+            // Add analysis policies for manager
+            database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (2, 2, 'read')`);
+            // Add analysis policies for reader
+            database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (3, 3, 'read')`);
         })
 
         database.serialize(() => {
             // Add project right for current user who initialize the database
             database.run(`INSERT INTO rights_project (user_id, role_id, project_id) VALUES (${userId}, 1, 1)`);
+            // Add project right for manager user
+            database.run(`INSERT INTO rights_project (user_id, role_id, project_id) VALUES (2, 2, 2)`);
+            // Add project right for reader user
+            database.run(`INSERT INTO rights_project (user_id, role_id, project_id) VALUES (3, 3, 3)`);
         })
 
         database.serialize(() => {
             // Add analysis right for current user who initialize the database
             database.run(`INSERT INTO rights_analysis (user_id, role_id, analysis_id) VALUES (${userId}, 1, 1)`);
+            // Add analysis right for manager user
+            database.run(`INSERT INTO rights_analysis (user_id, role_id, analysis_id) VALUES (2, 2, 2)`);
+            // Add analysis right for reader user
+            database.run(`INSERT INTO rights_analysis (user_id, role_id, analysis_id) VALUES (3, 3, 2)`);
         })
 
 
@@ -111,7 +137,7 @@ databaseRoute.openapi(deleteSQLRoute, (c) => {
 
 databaseRoute.openapi(getAllProjectRoute, async (c) => {
     const sql = 'SELECT * FROM projects';
-    const projects = await getAsync<User>(sql);
+    const projects = await allAsync<Project[]>(sql);
 
     return c.json({
         success: true,
@@ -121,7 +147,7 @@ databaseRoute.openapi(getAllProjectRoute, async (c) => {
 
 databaseRoute.openapi(getAllAnalysisRoute, async (c) => {
     const sql = 'SELECT * FROM analyses';
-    const analysis = await getAsync<User>(sql);
+    const analysis = await allAsync<Analysis[]>(sql);
 
     return c.json({
         success: true,

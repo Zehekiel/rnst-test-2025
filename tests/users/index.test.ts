@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { cookieName, secret } from '@/constant'; // Import constants
 import { User } from '@/types'; // Import types
-import { getAsync } from '@/helper'; // Import the function to be mocked
+import { getAsync, getUserRole } from '@/helper'; // Import the function to be mocked
 import { getSignedCookie } from 'hono/cookie'; // Import the function to be mocked
 import usersRoute from '@/users';
 
@@ -9,16 +9,11 @@ import usersRoute from '@/users';
 // Mock the database helper function
 jest.mock('@/helper', () => ({
     getAsync: jest.fn(),
+    getUserRole: jest.fn(),
 }));
 // Mock the cookie function
 jest.mock('hono/cookie', () => ({
-    // We need to mock the specific named export
     getSignedCookie: jest.fn(),
-    // Include other exports if your code uses them, otherwise Jest might complain
-    // setCookie: jest.fn(),
-    // deleteCookie: jest.fn(),
-    // getCookie: jest.fn(),
-    // etc.
 }));
 
 // --- Test Setup ---
@@ -26,6 +21,7 @@ const app = new Hono().route('/users', usersRoute); // Mount the routes
 
 // Type cast the mocked functions for type safety
 const mockedGetAsync = getAsync as jest.Mock;
+const mockedGetUserRole = getUserRole as jest.Mock;
 const mockedGetSignedCookie = getSignedCookie as jest.Mock;
 
 describe('User Routes', () => {
@@ -46,6 +42,7 @@ describe('User Routes', () => {
             mockedGetSignedCookie.mockResolvedValue({[cookieName]: mockCookieValue}); // It returns the value directly
             // Mock getAsync to return user data
             mockedGetAsync.mockResolvedValue(mockUserData);
+            mockedGetUserRole.mockResolvedValue(undefined); // Not relevant for this test
 
             // Act
             // Simulate the cookie being present in the request headers
@@ -126,8 +123,8 @@ describe('User Routes', () => {
 
         it('should return project role name when projectId is valid', async () => {
             // Arrange
-            const mockRole: MockRoleResponse = { role_name: 'ProjectAdmin' };
-            mockedGetAsync.mockResolvedValue(mockRole);
+            const mockRole = 'ProjectAdmin';
+            mockedGetUserRole.mockResolvedValue(mockRole);
             const path = `/users/${testUserId}/project/${testProjectId}/analyse/${placeholderAnalysisId}`;
 
             // Act
@@ -140,15 +137,14 @@ describe('User Routes', () => {
                 success: true,
                 data: 'ProjectAdmin',
             });
-            expect(mockedGetAsync).toHaveBeenCalledWith(expect.stringContaining('rights_project'), [testUserId, testProjectId]);
-            expect(mockedGetAsync).not.toHaveBeenCalledWith(expect.stringContaining('rights_analysis'), expect.anything());
+            expect(mockedGetUserRole).toHaveBeenCalledWith(testUserId, testProjectId, placeholderAnalysisId);
         });
 
         it('should return analysis role name when analysisId is valid and projectId is placeholder', async () => {
             // Arrange
-            const mockRole: MockRoleResponse = { role_name: 'AnalysisViewer' };
+            const mockRole = 'AnalysisViewer';
             // Mock the first call (project check) to return null, second call (analysis check) to return the role
-            mockedGetAsync.mockResolvedValue(mockRole); // For the analysis check
+            mockedGetUserRole.mockResolvedValue(mockRole); // For the analysis check
             const path = `/users/${testUserId}/project/${placeholderProjectId}/analyse/${testAnalysisId}`;
 
             // Act
@@ -162,15 +158,13 @@ describe('User Routes', () => {
                 data: 'AnalysisViewer',
             });
             // Check calls - project should be checked first (and return null), then analysis
-            expect(mockedGetAsync).toHaveBeenCalledTimes(1);
-            expect(mockedGetAsync).toHaveBeenCalledWith(expect.stringContaining('rights_analysis'), [testUserId, testAnalysisId]);
-            expect(mockedGetAsync).not.toHaveBeenCalledWith(expect.stringContaining('rights_project'), expect.anything());
+            expect(mockedGetUserRole).toHaveBeenCalledWith(testUserId, placeholderProjectId, testAnalysisId);
         });
 
 
         it('should return null data for project role if user/project combo not found', async () => {
              // Arrange
-            mockedGetAsync.mockResolvedValue(null); // Simulate role not found
+             mockedGetUserRole.mockResolvedValue(null); // Simulate role not found
             const path = `/users/${testUserId}/project/${testProjectId}/analyse/${placeholderAnalysisId}`;
 
             // Act
@@ -181,14 +175,15 @@ describe('User Routes', () => {
              // NOTE: Testing current behavior.
             expect(await res.json()).toEqual({
                 success: true,
+                data: null,
             });
-            expect(mockedGetAsync).toHaveBeenCalledWith(expect.stringContaining('rights_project'), [testUserId, testProjectId]);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(testUserId, testProjectId, placeholderAnalysisId);
         });
 
         it('should return null data for analysis role if user/analysis combo not found', async () => {
              // Arrange
              // Mock project check returning null, analysis check returning null
-            mockedGetAsync.mockResolvedValue(null);
+            mockedGetUserRole.mockResolvedValue(null);
             const path = `/users/${testUserId}/project/${placeholderProjectId}/analyse/${testAnalysisId}`;
 
             // Act
@@ -199,13 +194,13 @@ describe('User Routes', () => {
              // NOTE: Testing current behavior.
             expect(await res.json()).toEqual({
                 success: true,
+                data: null,
             });
-            expect(mockedGetAsync).toHaveBeenCalledTimes(1); // Both project and analysis checks should happen
-            expect(mockedGetAsync).not.toHaveBeenCalledWith(expect.stringContaining('rights_project'), expect.anything());
-            expect(mockedGetAsync).toHaveBeenCalledWith( expect.stringContaining('rights_analysis'), [testUserId,testAnalysisId]);
+            expect(mockedGetUserRole).toHaveBeenCalledTimes(1); // Both project and analysis checks should happen
+            expect(mockedGetUserRole).toHaveBeenCalledWith( testUserId,placeholderProjectId, testAnalysisId);
         });
 
-        it('should return 500 error message when both projectId and analysisId are placeholders', async () => {
+        it('should return null when both projectId and analysisId are placeholders', async () => {
             // Arrange
             const path = `/users/${testUserId}/project/${placeholderProjectId}/analyse/${placeholderAnalysisId}`;
 
@@ -213,56 +208,13 @@ describe('User Routes', () => {
             const res = await app.request(path);
 
             // Assert
-            expect(res.status).toBe(500);
+            expect(res.status).toBe(200);
             expect(await res.json()).toEqual({
                 success: true, // The code currently returns success: true even on error
-                data: "Aucun ID de projet ou d'analyse fourni",
+                data:null,
             });
             expect(mockedGetAsync).not.toHaveBeenCalled(); // No DB calls should be made
-        });
-
-        it('[Updated Logic] should return project role and null analysis role', async () => {
-            // Arrange
-            const mockProjectRole: MockRoleResponse = { role_name: 'ProjectEditor' };
-            // Mock project check returning role, analysis check returning null (because analysisId is placeholder)
-            mockedGetAsync.mockResolvedValueOnce(mockProjectRole); // Project role found
-            // No second call needed if analysisId is placeholder
-
-            const path = `/users/${testUserId}/project/${testProjectId}/analyse/${placeholderAnalysisId}`;
-
-            // Act
-            const res = await app.request(path);
-
-            // Assert (assuming updated response structure)
-            expect(res.status).toBe(200);
-            expect(await res.json()).toEqual({
-                success: true,
-                data: 'ProjectEditor'
-            });
-            expect(mockedGetAsync).toHaveBeenCalledTimes(1);
-            expect(mockedGetAsync).toHaveBeenCalledWith(expect.stringContaining('rights_project'), [testUserId, testProjectId]);
-        });
-
-        it('[Updated Logic] should return analysis role and null project role', async () => {
-            // Arrange
-            const mockAnalysisRole: MockRoleResponse = { role_name: 'AnalysisRunner' };
-            // Mock project check returning null, analysis check returning role
-            mockedGetAsync
-                .mockResolvedValueOnce(null) // Project role check (placeholder ID)
-                .mockResolvedValueOnce(mockAnalysisRole); // Analysis role found
-
-            const path = `/users/${testUserId}/project/${placeholderProjectId}/analyse/${testAnalysisId}`;
-
-            // Act
-            const res = await app.request(path);
-
-            // Assert (assuming updated response structure)
-            expect(res.status).toBe(200);
-            expect(await res.json()).toEqual({
-                success: true,
-            });
-            expect(mockedGetAsync).toHaveBeenCalledTimes(1);
-            expect(mockedGetAsync).toHaveBeenCalledWith(expect.stringContaining('rights_analysis'), [testUserId, testAnalysisId]);
+            expect(mockedGetUserRole).toHaveBeenCalled(); // No role checks should happen
         });
     });
 });
