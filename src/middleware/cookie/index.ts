@@ -9,7 +9,6 @@ function haveCookie(obj: object): boolean {
 export async function checkCookiesMiddleware(c: Context, next: Next) {
     console.log('Middleware checkCookiesMiddleware executed');
 
-    // Récupérer la valeur d'un cookie spécifique
     const cookie = await getSignedCookie(c, secret)
 
     if (haveCookie(cookie)) {
