@@ -219,7 +219,7 @@ describe('User Routes', () => {
             expect(res.status).toBe(200);
             expect(await res.json()).toEqual({
                 success: true, // The code currently returns success: true even on error
-                data: undefined,
+                data: null,
             });
             expect(mockedGetUserRole).toHaveBeenCalled(); // No role checks should happen
         });
