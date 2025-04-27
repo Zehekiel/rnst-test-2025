@@ -1,10 +1,10 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { deleteSQLRoute, getCurrentDataRoute, getInitSQLRoute } from './route'
+import { deleteSQLRoute, getAllAnalysisRoute, getAllProjectRoute, getInitSQLRoute } from './route'
 import database from '@/database';
 import { analysisPolicyTable,rightsProjectTable, rightsAnalysisTable,analysisTable, projectPolicyTable, projectTable, roleTable, userTable } from '@/sql/modele';
 import { getSignedCookie } from 'hono/cookie';
 import { cookieName, secret } from '@/constant';
-import { getAsync } from './helper';
+import { getAsync } from '../helper';
 import { User } from '@/types';
 
 const databaseRoute = new OpenAPIHono()
@@ -47,13 +47,18 @@ databaseRoute.openapi(getInitSQLRoute, async (c) => {
         })
 
         database.serialize(() => {
+            // Create a analyse for the current user
+            database.run(`INSERT INTO analyses (id, name, owner_id, project_id) VALUES (1, 'Analyse 1', ${userId}, 1)`);
+        })
+
+        database.serialize(() => {
             // Add project policies for admin
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'write')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'read')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'update')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'delete')`);
         })
-        
+
         database.serialize(() => {
             // Add analysis policies for admin
             database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (0, 1, 'write')`);
@@ -104,16 +109,23 @@ databaseRoute.openapi(deleteSQLRoute, (c) => {
     })
 })
 
-databaseRoute.openapi(getCurrentDataRoute, async (c) => {
-    const cookie = await getSignedCookie(c, secret)
-    const user = cookie[cookieName] || '{}'
-    const userId = JSON.parse(user).id
-    const sql = 'SELECT * FROM users WHERE id = ?';
-    const userData = await getAsync<User>(sql, [userId]);
+databaseRoute.openapi(getAllProjectRoute, async (c) => {
+    const sql = 'SELECT * FROM projects';
+    const projects = await getAsync<User>(sql);
 
     return c.json({
         success: true,
-        data:  userData,
+        data:  projects,
+    })
+})
+
+databaseRoute.openapi(getAllAnalysisRoute, async (c) => {
+    const sql = 'SELECT * FROM analyses';
+    const analysis = await getAsync<User>(sql);
+
+    return c.json({
+        success: true,
+        data:  analysis,
     })
 })
 

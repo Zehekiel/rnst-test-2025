@@ -1,6 +1,6 @@
 import { createRoute } from '@hono/zod-openapi'
 import { Tags } from '@/constant'
-import { initSQlResponseSchema } from './schemas/response'
+import { getAllAnalysisResponseSchema, getAllProjectResponseSchema, initSQlResponseSchema } from './schemas/response'
 
 export const getInitSQLRoute = createRoute({
     method: 'get',
@@ -44,17 +44,38 @@ export const deleteSQLRoute = createRoute({
     },
 })
 
-export const getCurrentDataRoute = createRoute({
+export const getAllProjectRoute = createRoute({
     method: 'get',
-    path: '/getCurrentUser',
+    path: '/projects',
     tags:[Tags.database],
-    description: 'Obtenir l\'utilisateur actuel via les cookies',
-    summary: 'Obtenir l\'utilisateur actuel',
+    description: 'Obtenir tous les projets dans la base de données',
+    summary: 'Obtenir tous les projets',
     responses: {
         200: {
             content: {
                 'application/json': {
-                    schema: initSQlResponseSchema,
+                    schema: getAllProjectResponseSchema,
+                },
+            },
+            description: 'Base de données supprimée',
+        },
+        401: {
+            description: 'Unauthorized',
+        },
+    },
+})
+
+export const getAllAnalysisRoute = createRoute({
+    method: 'get',
+    path: '/analyses',
+    tags:[Tags.database],
+    description: 'Obtenir toutes les analyses dans la base de données',
+    summary: 'Obtenir toutes les analyses',
+    responses: {
+        200: {
+            content: {
+                'application/json': {
+                    schema: getAllAnalysisResponseSchema,
                 },
             },
             description: 'Base de données supprimée',
