@@ -5,7 +5,8 @@ import analysis from '@/analyses/index';
 import project from '@/projects/index';
 import connection from '@/connection/index';
 import 'dotenv/config';
-import { getCookie, getSignedCookie } from 'hono/cookie';
+import { getSignedCookie } from 'hono/cookie';
+import { cookieName } from './constant';
 
 /**
  * @see https://hono.dev/
@@ -73,7 +74,7 @@ app.get('/ui', async (c) => {
                     <div class="buttons">
                         <button onclick="window.location.href='/doc'">Documentation</button>
                         <button onclick="window.location.href='/ui'">Swagger</button>
-                        <button id="connectionButton" onclick="window.location.href='/connection/github'">${cookie.rnest_user ? "Connecté" : "Connexion"}</button>
+                        <button id="connectionButton" onclick="window.location.href='/connection/github'">${cookie[cookieName] ? "Connecté" : "Connexion"}</button>
                     </div>
                 </div>
             </head>
@@ -85,6 +86,7 @@ app.get('/ui', async (c) => {
 })
 
 const port = 3000
+
 console.log(`Server is running on http://localhost:${port}`)
 
 serve({
