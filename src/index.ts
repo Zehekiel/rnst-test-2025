@@ -8,6 +8,10 @@ import 'dotenv/config';
 import { getSignedCookie } from 'hono/cookie';
 import { cookieName, secret } from './constant';
 import { checkCookiesMiddleware } from './middleware/cookie';
+import databaseRoute from '@/sql/index';
+import sqlite3 from 'sqlite3'
+
+sqlite3.verbose()
 
 /**
  * @see https://hono.dev/
@@ -19,6 +23,7 @@ app.use(checkCookiesMiddleware)
 app.route('/connection', connection);
 app.route('/', analysis);
 app.route('/projects', project);
+app.route('/database', databaseRoute);
 
 app.doc('/doc', {
     openapi: '3.0.0',

@@ -1,16 +1,18 @@
-import { secret } from '@/constant';
+import { cookieName, secret } from '@/constant';
 import { Context, Next } from 'hono';
 import { getSignedCookie } from 'hono/cookie';
 
-function haveCookie(obj: object): boolean {
-    return Object.keys(obj).length > 0;
+function haveCookie(cookie: { [key: string]: Record<string, unknown> | string | number | boolean }): boolean {
+    if(Object.keys(cookie).length > 0 && cookie[cookieName] !== false) {
+        return true
+    } else {
+        return false
+    }
 }
 
 export async function checkCookiesMiddleware(c: Context, next: Next) {
-    console.log('Middleware checkCookiesMiddleware executed');
 
     const cookie = await getSignedCookie(c, secret)
-
     if (haveCookie(cookie)) {
         await next();
     } else if (c.req.url.includes("connection") || c.req.url.endsWith("ui") || c.req.url.endsWith("doc")) {
