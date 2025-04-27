@@ -1,8 +1,10 @@
 import { serve } from '@hono/node-server'
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { swaggerUI } from '@hono/swagger-ui'
+import { SwaggerUI, swaggerUI } from '@hono/swagger-ui'
 import analysis from '@/analyses/index';
 import project from '@/projects/index';
+import connection from '@/connection/index';
+import 'dotenv/config';
 
 /**
  * @see https://hono.dev/
@@ -11,17 +13,53 @@ const app = new OpenAPIHono()
 
 app.route('/', analysis);
 app.route('/projects', project);
+app.route('/connection', connection);
 
 app.doc('/doc', {
     openapi: '3.0.0',
     info: {
         version: '1.0.0',
-        title: 'rnst-test',
-        description: 'Documentation API de pour le projet de test RNST',
+        title: '',
+        description: 'Documentation API de pour le projet de test RNEST',
     },
 })
 
-app.get('/ui', swaggerUI({ url: '/doc' }))
+
+app.get('/ui', (c) => {
+    return c.html(`
+        <html lang="en">
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <meta name="description" content="RNEST-Test" />
+                <title>RNEST-Test</title>
+                <script>
+                    // custom script
+                </script>
+                <style>
+                    button {
+                        background-color: transparent; 
+                        padding:4px;
+                        color: white; 
+                        border: 0px; 
+                        cursor: pointer
+                    }
+                </style>
+                <div style="align-items: space-between; display: flex; flex-direction: row; background-color: #100547; margin-bottom: -16px">
+                    <h1 style="color: white; width: 100%; margin-left: 16px;font-family: sans-serif">RNEST-Test</h1>
+                    <div style="display: flex; flex-direction: row; gap: 16px; margin-right: 16px; align-items: center;">
+                        <button onclick="window.location.href='/doc'">Documentation</button>
+                        <button onclick="window.location.href='/ui'">Swagger</button>
+                        <button onclick="window.location.href='/connection/github'">Connexion à Github</button>
+                    </div>
+                </div>
+            </head>
+            <body>
+                ${SwaggerUI({ url: '/doc', oauth2RedirectUrl: process.env.GITHUB_REDIRECT_URI })}
+            </body>
+        </html>
+    `)
+})
 
 const port = 3000
 console.log(`Server is running on http://localhost:${port}`)

@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
+    "@hono/oauth-providers": "^0.7.1",
     "@hono/swagger-ui": "^0.5.1",
     "@hono/zod-openapi": "^0.19.5",
-    "hono": "^4.7.1",
+    "dotenv": "^16.5.0",
+    "hono": "^4.7.7",
     "hono-openapi": "^0.4.6",
     "sqlite3": "^5.1.7",
     "zod": "^3.24.3"
