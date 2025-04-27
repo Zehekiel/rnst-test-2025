@@ -4,29 +4,9 @@ import database from '@/database'; // We will mock this
 
 // Mock the database module
 jest.mock('@/database', () => ({
-    // Mock the 'get' method
-    get: jest.fn((sql: string, params: unknown[], callback: (err: Error | null, row?: any) => void) => {
-        // Simulate database responses based on sql or params if needed
-        // Default mock implementation (can be overridden in tests)
-        if (sql.includes('SELECT EXISTS')) {
-             // Default for owner checks or permission checks
-            callback(null, { is_owner: 0, has_permission: 0 });
-        } else if (sql.includes('SELECT\n                r.name AS role_name')) {
-             // Default for getUserRole
-             callback(null, undefined); // Simulate user not found or no role
-        } else {
-             callback(null, undefined); // Default undefined for other gets
-        }
-    }),
-    // Mock the 'all' method
-    all: jest.fn((sql: string, params: unknown[], callback: (err: Error | null, rows?: any[]) => void) => {
-        // Default mock implementation (can be overridden in tests)
-        callback(null, []); // Default empty array
-    }),
-    // Mock the 'close' method
-    close: jest.fn((callback: (err?: Error) => void) => {
-        callback(); // Call the callback with no error
-    }),
+    // Define the structure with mock functions
+    get: jest.fn(),
+    all: jest.fn(),
 }));
 
 // Type assertion for the mocked database functions
@@ -39,6 +19,21 @@ describe('Database Helpers', () => {
     beforeEach(() => {
         mockedDbGet.mockClear();
         mockedDbAll.mockClear();
+        mockedDbGet.mockImplementation((sql, params, callback) => {
+        // Default mock logic for 'get' (e.g., return undefined or specific structure)
+            if (sql.includes('SELECT EXISTS')) {
+                callback(null, { is_owner: 0, has_permission: 0 });
+            } else if (sql.includes('r.name AS role_name')) { // Simplified check for role query
+                callback(null, undefined);
+            } else {
+                callback(null, undefined);
+            }
+    });
+    mockedDbAll.mockImplementation((sql, params, callback) => {
+        // Default mock logic for 'all' (e.g., return empty array)
+        callback(null, []);
+    });
+
     });
 
     // --- Tests for getAsync ---
