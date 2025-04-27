@@ -1,7 +1,9 @@
 import { githubAuth } from '@hono/oauth-providers/github'
 import { OpenAPIHono } from '@hono/zod-openapi'
+import { getGithubRoute } from './route'
+import { Hono } from 'hono'
 
-const connection = new OpenAPIHono()
+const connection = new Hono()
 
 connection.use(
     '/github',
@@ -14,16 +16,11 @@ connection.use(
     })
 )
 
-connection.get('/github', (c) => {
+connection.get("github", (c) => {
     const token = c.get('token')
-    const refreshToken = c.get('refresh-token')
     const user = c.get('user-github')
-
-    return c.json({
-        token,
-        refreshToken,
-        user,
-    })
+    
+    return c.redirect("/ui")
 })
 
 export default connection
