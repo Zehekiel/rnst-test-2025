@@ -3,6 +3,7 @@ export const Tags = {
     analysis: 'Analyses',
     connection: 'Connexion',
     database: 'Base de données',
+    users: 'Utilisateurs'
 } as const
 
 export const cookieName = 'rnest_user'

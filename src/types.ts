@@ -24,3 +24,12 @@ export type Action =
 export type Resource = Project | Analysis | null;
 
 export type PermissionLevel = 'read' | 'update' | 'write' | 'delete';
+
+export type Role = {
+    id: number;
+    name: string;
+};
+
+export type UserRole = {
+    role_name: string;
+}
