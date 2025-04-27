@@ -5,3 +5,5 @@ export const Tags = {
 } as const
 
 export const cookieName = 'rnest_user'
+
+export const secret = process.env.GITHUB_SECRET ?? 'GITHUB_SECRET is not defined'

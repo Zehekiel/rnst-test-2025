@@ -1,7 +1,7 @@
-import { cookieName } from '@/constant'
+import { cookieName, secret } from '@/constant'
 import { githubAuth } from '@hono/oauth-providers/github'
 import { Hono } from 'hono'
-import {setSignedCookie} from 'hono/cookie'
+import {deleteCookie, setSignedCookie} from 'hono/cookie'
 
 const connection = new Hono()
 
@@ -25,17 +25,23 @@ connection.get("github", async  (c) => {
         httpOnly: true,
         maxAge: 60 * 60 * 24 * 7, // 7 days
     }
-    if (process.env.GITHUB_SECRET === undefined) {
-        throw new Error("GITHUB_SECRET is not defined")
-    }
     // documentation: https://hono.dev/docs/helpers/cookie#secure-and-host-prefix
     await setSignedCookie(
         c, 
         cookieName, 
         cookieValue,
-        process.env.GITHUB_SECRET,
+        secret,
         cookieOption
         )
+
+    return c.redirect("/ui")
+})
+
+connection.get('logout', async (c) => {
+    deleteCookie(
+        c, 
+        cookieName, 
+    )
 
     return c.redirect("/ui")
 })

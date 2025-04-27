@@ -6,16 +6,19 @@ import project from '@/projects/index';
 import connection from '@/connection/index';
 import 'dotenv/config';
 import { getSignedCookie } from 'hono/cookie';
-import { cookieName } from './constant';
+import { cookieName, secret } from './constant';
+import { checkCookiesMiddleware } from './middleware/cookie';
 
 /**
  * @see https://hono.dev/
  */
 const app = new OpenAPIHono()
 
+app.use(checkCookiesMiddleware)
+
+app.route('/connection', connection);
 app.route('/', analysis);
 app.route('/projects', project);
-app.route('/connection', connection);
 
 app.doc('/doc', {
     openapi: '3.0.0',
@@ -28,11 +31,7 @@ app.doc('/doc', {
 
 
 app.get('/ui', async (c) => {
-    if (!process.env.GITHUB_SECRET) {
-        throw new Error("GITHUB_SECRET is not defined")
-    }
-
-    const cookie = await getSignedCookie(c, process.env.GITHUB_SECRET)
+    const cookie = await getSignedCookie(c, secret)
 
     return c.html(`
         <html lang="en">
@@ -74,7 +73,12 @@ app.get('/ui', async (c) => {
                     <div class="buttons">
                         <button onclick="window.location.href='/doc'">Documentation</button>
                         <button onclick="window.location.href='/ui'">Swagger</button>
-                        <button id="connectionButton" onclick="window.location.href='/connection/github'">${cookie[cookieName] ? "Connecté" : "Connexion"}</button>
+                        <button 
+                            id="connectionButton" 
+                            onclick=${cookie[cookieName] ? "window.location.href='/connection/logout'" : "window.location.href='/connection/github'"}
+                            >
+                                ${cookie[cookieName] ? "Connecté" : "Connexion"}
+                            </button>
                     </div>
                 </div>
             </head>
