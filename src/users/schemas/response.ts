@@ -4,8 +4,8 @@ import { z } from 'zod';
 export const getUserDataResponseSchema = z.object({
     success: z.boolean(),
     data: z.object({
-        project_role: z.number().describe("ID de l'utilisateur"),
-        analysis_role: z.string().describe("Nom de l'utilisateur"),
+        id: z.number().describe("ID de l'utilisateur"),
+        name: z.string().describe("Nom de l'utilisateur"),
     }).describe("Message de confirmation d'initialisation de la base de données"),
 });
 

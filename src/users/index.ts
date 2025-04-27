@@ -28,7 +28,7 @@ usersRoute.openapi(getUserRoleRoute, async (c) => {
 
     if (projectId !== "{projectId}") {
         // return only the project role with Join
-        const sql =`
+        const projectSql =`
             SELECT
                 r.name AS role_name
             FROM
@@ -38,7 +38,7 @@ usersRoute.openapi(getUserRoleRoute, async (c) => {
             WHERE
                 rp.user_id = ? AND rp.project_id = ?;
         `;
-        const userRole = await getAsync<UserRole>(sql, [userId, projectId]);
+        const userRole = await getAsync<UserRole>(projectSql, [userId, projectId]);
         return c.json({
             success: true,
             data:  userRole?.role_name,
@@ -46,7 +46,7 @@ usersRoute.openapi(getUserRoleRoute, async (c) => {
     }
 
     if (analysisId !== "{analysisId}") {
-        const sql = `
+        const analyseSql = `
             SELECT
                 r.name AS role_name
             FROM
@@ -56,7 +56,7 @@ usersRoute.openapi(getUserRoleRoute, async (c) => {
             WHERE
                 ra.user_id = ? AND ra.analysis_id = ?;
         `;
-        const userRole = await getAsync<UserRole>(sql, [userId, analysisId]);
+        const userRole = await getAsync<UserRole>(analyseSql, [userId, analysisId]);
         return c.json({
             success: true,
             data:  userRole?.role_name,
