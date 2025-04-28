@@ -2,8 +2,9 @@ import database from "@/database";
 import { cookieName, roles, secret } from "./constant";
 import { getSignedCookie } from "hono/cookie";
 import { Context, Env } from "hono";
-import { getUserRole, isUserHaveProjectRight, isUserProjectOwner } from "./users/helper";
+import { getUserRole, isUserAnalyseOwner, isUserHaveProjectRight, isUserProjectOwner } from "./users/helper";
 import { PermissionLevel } from "./types";
+import { isUserHaveAnalyseRight } from "./analyses/helper";
 
 // Wrapper pour db.get
 export function getAsync<T = unknown>(sql: string, params?: unknown[]): Promise<T | undefined> {
@@ -68,16 +69,20 @@ export function getRoleId(roleName: string): number {
     return roleId
 };
 
-export async function controlProjectPermission(userId: string, projectId: string, action?: PermissionLevel): Promise<boolean> {
+export async function controlPermission(props : {userId: string, projectId: string, analysisId?: string, action?: PermissionLevel}): Promise<boolean> {
+    const { userId, projectId, analysisId, action } = props
     const role = await getUserRole(userId, projectId);
-    const userRole = await getUserRole(userId, "0");
+    const hightRole = await getUserRole(userId, "0");
 
-    if (role === "admin") {
+    if (hightRole === "admin") {
         return true;
     }
 
     if (action){
-        if (userRole === "manager" && role !== "admin" && (action === "write")) {
+        if (hightRole === "manager" && (action === "write")) {
+            return true;
+        }
+        if (role === "read" && action === "read") {
             return true;
         }
     }
@@ -87,5 +92,20 @@ export async function controlProjectPermission(userId: string, projectId: string
         return true;
     }
 
-    return isUserHaveProjectRight(userId, projectId);
+    if (analysisId) {
+        const isAnalyseOwner = await isUserAnalyseOwner(userId, analysisId);
+        if (isAnalyseOwner) {
+            return true;
+        }
+    }
+    const isProjectRight = await isUserHaveProjectRight(userId, projectId);
+    if (isProjectRight) {
+        return true;
+    }
+
+    const isAnalyseRight = await isUserHaveAnalyseRight(userId, analysisId);
+    if (isAnalyseRight) {
+        return true;
+    }
+    return false;
 }

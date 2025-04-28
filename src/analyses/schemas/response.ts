@@ -7,14 +7,6 @@ export const analysesResponseSchema = z.object({
     ).describe('Liste des analyses d\'un projet'),
 });
 
-export const analysisResponseSchema = z.object({
-    success: z.boolean().describe('Indique si la requête a réussi'),
-    data: z.object({
-        projectId: z.string().describe('ID du projet'),
-        analysisId: z.string().describe('ID de l\'analyse'),
-    }).describe('Liste des analyses d\'un projet'),
-});
-
 export const postAnalysisResponseSchema = z.object({
     success: z.boolean().describe('Indique si la requête a réussi'),
     data: z.object({
@@ -22,4 +14,24 @@ export const postAnalysisResponseSchema = z.object({
         analysisId: z.string().describe('Message de confirmation d\'ajout d\'analyse'),
         users: z.string().describe('Message de confirmation d\'ajout d\'utilisateur'),
     }).describe('Liste des analyses d\'un projet'),
+});
+
+export const analysisResponseSchema = z.object({
+    success: z.boolean().describe('Indique si la requête a réussi'),
+    data: z.object({
+        id: z.string().describe('ID de l\'analyse'),
+        projectId: z.string().describe('ID du projet lié à l\'analyse'),
+        ownerId: z.string().describe('ID de l\'utilisateur propriétaire de l\'analyse'),
+        name: z.string().describe('Nom de l\'analyse'),
+    }).describe('Liste des analyses d\'un projet'),
+});
+
+export const deleteAnalysisResponseSchema = z.object({
+    success: z.boolean().describe('Indique si la requête a réussi'),
+    data: z.string().describe('Message de confirmation de suppression'),
+});
+
+export const updateAnalysisResponseSchema = z.object({
+    success: z.boolean().describe('Indique si la requête a réussi'),
+    data: z.string().describe('Message de confirmation de modification'),
 });

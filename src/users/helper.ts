@@ -72,8 +72,8 @@ export async function isUserHaveProjectRight(userId: string, projectId: string):
         return true;
     }
     return false;
-
 }
+
 export async function addUser(name: string){
     try{
         const sql = `

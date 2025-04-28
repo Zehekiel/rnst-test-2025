@@ -5,7 +5,7 @@ import {
     getCookieData,
     allAsync,
     getAsync,
-    controlProjectPermission,
+    controlPermission,
     getRoleId,
 } from '@/helper';
 import {
@@ -23,7 +23,7 @@ jest.mock('@/helper', () => ({
     getCookieData: jest.fn(),
     allAsync: jest.fn(),
     getAsync: jest.fn(),
-    controlProjectPermission: jest.fn(),
+    controlPermission: jest.fn(),
     getRoleId: jest.fn((roleName: string) => { // Simple mock for getRoleId
         if (roleName === 'Admin') return 1;
         if (roleName === 'Manager') return 2;
@@ -50,7 +50,7 @@ const mockedGetCookieData = getCookieData as jest.Mock;
 const mockedGetUserRole = getUserRole as jest.Mock;
 const mockedAllAsync = allAsync as jest.Mock;
 const mockedGetAsync = getAsync as jest.Mock;
-const mockedControlProjectPermission = controlProjectPermission as jest.Mock;
+const mockedControlProjectPermission = controlPermission as jest.Mock;
 const mockedGetRoleId = getRoleId as jest.Mock;
 const mockedAddProject = addProject as jest.Mock;
 const mockedAddProjectPolicies = addProjectPolicies as jest.Mock;
@@ -156,7 +156,7 @@ describe('Project Routes', () => {
             expect(json.data.project).toContain('New Project ajouté');
             expect(json.data.users).toContain('Utilisateur(s) ajouté(s)');
 
-            expect(mockedControlProjectPermission).toHaveBeenCalledWith('user123', '', 'write');
+            expect(mockedControlProjectPermission).toHaveBeenCalledWith({"action": "write", "projectId": "", "userId": "user123"});
             expect(mockedAddProject).toHaveBeenCalledWith('New Project', 'user123');
             expect(mockedAddProjectPolicies).toHaveBeenCalledWith(99);
             expect(mockedAddUser).toHaveBeenCalledWith('testuser');
@@ -243,7 +243,7 @@ describe('Project Routes', () => {
             const json = await res.json();
             expect(json.success).toBe(true);
             expect(json.data).toEqual(mockProject);
-            expect(mockedControlProjectPermission).toHaveBeenCalledWith('user123', projectId.toString());
+            expect(mockedControlProjectPermission).toHaveBeenCalledWith({"projectId": "1", "userId": "user123"});
             expect(mockedGetAsync).toHaveBeenCalledWith('SELECT * FROM projects WHERE id = ?', [projectId.toString()]);
         });
 
@@ -259,7 +259,7 @@ describe('Project Routes', () => {
             expect(mockedGetAsync).not.toHaveBeenCalled();
         });
 
-        it('should return 500 if controlProjectPermission fails (example)', async () => {
+        it('should return 500 if controlPermission fails (example)', async () => {
             mockedControlProjectPermission.mockRejectedValueOnce(new Error('Permission check error'));
 
             const res = await app.request(`/projects/${projectId}`);
@@ -283,7 +283,7 @@ describe('Project Routes', () => {
             const json = await res.json();
             expect(json.success).toBe(true);
             expect(json.data).toContain(`Projet ${projectId} supprimé`);
-            expect(mockedControlProjectPermission).toHaveBeenCalledWith('user123', projectId);
+            expect(mockedControlProjectPermission).toHaveBeenCalledWith({"projectId": "proj789", "userId": "user123"});
             expect(mockedDeleteProject).toHaveBeenCalledWith(projectId);
         });
 
@@ -328,7 +328,7 @@ describe('Project Routes', () => {
             const json = await res.json();
             expect(json.success).toBe(true);
             expect(json.data).toContain('Updated Project Name modifié');
-            expect(mockedControlProjectPermission).toHaveBeenCalledWith('user123', projectId);
+            expect(mockedControlProjectPermission).toHaveBeenCalledWith({"projectId": "proj101", "userId": "user123"});
             expect(mockedUpdateProject).toHaveBeenCalledWith(projectId, 'Updated Project Name');
         });
 

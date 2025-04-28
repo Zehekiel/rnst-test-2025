@@ -8,7 +8,7 @@ import 'dotenv/config';
 import { getSignedCookie } from 'hono/cookie';
 import { cookieName, secret } from './constant';
 import { checkCookiesMiddleware } from './middleware/cookie';
-import databaseRoute from '@/sql/index';
+import databaseRoute from '@/db/index';
 import usersRoute from './users';
 
 const app = new OpenAPIHono()

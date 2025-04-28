@@ -1,9 +1,9 @@
-// tests/sql/index.test.ts
+// tests/database/index.test.ts
 
 import { Hono } from 'hono';
 // Import types and constants normally
 import { cookieName, secret } from '@/constant';
-import { userTable, roleTable, } from '@/sql/modele';
+import { userTable, roleTable, } from '@/db/modele';
 import database from '@/database';
 
 // --- Mock Setup ---
@@ -56,9 +56,9 @@ jest.doMock('hono/cookie', () => {
 
 // --- Test Setup ---
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const databaseRoute = require('@/sql').default;
+const databaseRoute = require('@/db').default;
 
-const app = new Hono().route('/sql', databaseRoute);
+const app = new Hono().route('/database', databaseRoute);
 
 // Now the mock variables (mockDbRun, etc.) should be initialized and accessible
 
@@ -93,8 +93,8 @@ describe('SQL Database Routes', () => {
         database.close(); // Close the database connection if needed
     })
 
-    // --- Tests for GET /sql/init ---
-    describe('GET /sql/init (getInitSQLRoute)', () => {
+    // --- Tests for GET /database/init ---
+    describe('GET /database/init (postInitSQLRoute)', () => {
         const mockUserId = 1;
         const mockUserName = 'InitUser';
         // The value stored in the cookie (stringified JSON)
@@ -108,8 +108,9 @@ describe('SQL Database Routes', () => {
             // mockDbRun uses default success from beforeEach
 
             // Act
-            const req = new Request('http://localhost/sql/init', {
+            const req = new Request('http://localhost/database/init', {
                 headers: { Cookie: `${cookieName}=signed-value` },
+                method: 'POST',
             });
             const res = await app.request(req);
 
@@ -136,7 +137,9 @@ describe('SQL Database Routes', () => {
             mockedGetSignedCookie.mockResolvedValue(undefined); // Simulate missing/invalid cookie
 
             // Act
-            const res = await app.request('/sql/init');
+            const res = await app.request('/database/init', {
+                method: 'POST'
+            });
 
             // Assert
             expect(res.status).toBe(500);
@@ -175,8 +178,9 @@ describe('SQL Database Routes', () => {
             });
 
             // Act
-            const req = new Request('http://localhost/sql/init', {
+            const req = new Request('http://localhost/database/init', {
                 headers: { Cookie: `${cookieName}=signed-value` },
+                method: 'POST',
             });
             const res = await app.request(req);
 
@@ -189,14 +193,14 @@ describe('SQL Database Routes', () => {
         });
     });
 
-    // --- Tests for DELETE /sql/delete ---
-    describe('DELETE /sql/delete (deleteSQLRoute)', () => {
+    // --- Tests for DELETE /database/delete ---
+    describe('DELETE /database/delete (deleteSQLRoute)', () => {
         it('should delete database tables successfully', async () => {
             // Arrange
             // mockDbRun uses default success from beforeEach
 
             // Act
-            const req = new Request('http://localhost/sql/delete', { method: 'DELETE' });
+            const req = new Request('http://localhost/database/delete', { method: 'DELETE' });
             const res = await app.request(req);
 
             // Assert
@@ -231,7 +235,7 @@ describe('SQL Database Routes', () => {
             });
 
             // Act
-            const req = new Request('http://localhost/sql/delete', { method: 'DELETE' });
+            const req = new Request('http://localhost/database/delete', { method: 'DELETE' });
             // The route handler for delete doesn't seem to have explicit try/catch,
             // so the error might propagate differently. Hono might catch it.
             const res = await app.request(req);
@@ -243,15 +247,15 @@ describe('SQL Database Routes', () => {
         });
     });
 
-    // --- Tests for GET /sql/projects ---
-    describe('GET /sql/projects (getAllProjectRoute)', () => {
+    // --- Tests for GET /database/projects ---
+    describe('GET /database/projects (getAllProjectRoute)', () => {
         it('should return all projects successfully', async () => {
             // Arrange
             const mockProjects = [{ id: 1, name: 'Project Alpha', owner_id: 1 }, { id: 2, name: 'Project Beta', owner_id: 2 }];
             mockedAllAsync.mockResolvedValue(mockProjects);
 
             // Act
-            const res = await app.request('/sql/projects');
+            const res = await app.request('/database/projects');
 
             // Assert
             expect(res.status).toBe(200);
@@ -268,7 +272,7 @@ describe('SQL Database Routes', () => {
             mockedAllAsync.mockResolvedValue([]); // Simulate empty result set
 
             // Act
-            const res = await app.request('/sql/projects');
+            const res = await app.request('/database/projects');
 
             // Assert
             expect(res.status).toBe(200);
@@ -285,7 +289,7 @@ describe('SQL Database Routes', () => {
             mockedAllAsync.mockRejectedValue(fetchError);
 
             // Act
-            const res = await app.request('/sql/projects');
+            const res = await app.request('/database/projects');
 
             // Assert
             expect(res.status).toBe(500);
@@ -295,8 +299,8 @@ describe('SQL Database Routes', () => {
         });
     });
 
-    // --- Tests for GET /sql/analyses ---
-    describe('GET /sql/analyses (getAllAnalysisRoute)', () => {
+    // --- Tests for GET /database/analyses ---
+    describe('GET /database/analyses (getAllAnalysisRoute)', () => {
         // Define a type matching the expected structure if not already imported
         type Analysis = { id: number; name: string; project_id: number; owner_id: number };
 
@@ -311,7 +315,7 @@ describe('SQL Database Routes', () => {
             mockedAllAsync.mockResolvedValue(mockAnalyses);
 
             // Act
-            const res = await app.request('/sql/analyses');
+            const res = await app.request('/database/analyses');
 
             // Assert
             expect(res.status).toBe(200);
@@ -327,7 +331,7 @@ describe('SQL Database Routes', () => {
             mockedAllAsync.mockResolvedValue([]);
 
             // Act
-            const res = await app.request('/sql/analyses');
+            const res = await app.request('/database/analyses');
 
             // Assert
             expect(res.status).toBe(200);
@@ -344,7 +348,7 @@ describe('SQL Database Routes', () => {
             mockedAllAsync.mockRejectedValue(fetchError);
 
             // Act
-            const res = await app.request('/sql/analyses');
+            const res = await app.request('/database/analyses');
 
             // Assert
             expect(res.status).toBe(500);

@@ -28,6 +28,8 @@ module.exports = {
   moduleNameMapper: {"^@/(.*)$": "<rootDir>/src/$1"},
   testPathIgnorePatterns: [
     "/node_modules/",
-    "/.history/"
+    "/.history/",
+    "/dist/",
   ],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
 };
