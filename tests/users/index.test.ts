@@ -229,4 +229,6 @@ describe('User Routes', () => {
             expect(mockedGetUserRole).toHaveBeenCalled(); // No role checks should happen
         });
     });
+
+    // TO DO: Add tests for the other routes (e.g., getUserAuthorizationRoute)
 });

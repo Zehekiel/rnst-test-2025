@@ -30,5 +30,12 @@ export const getUserAuthorizationParamSchema = z.object({
 
 export const getUserProjectParamSchema = z.object({
     userId: z.string()
-        .describe('ID de l\'utilisateur dont on veut obtenir le rôle'),
+        .describe('ID de l\'utilisateur dont on veut obtenir les projets'),
+})
+
+export const getUserAnalyseParamSchema = z.object({
+    userId: z.string()
+        .describe('ID de l\'utilisateur dont on veut obtenir les analyses'),
+    projectId: z.string()
+        .describe('ID du projet dont on veut obtenir les analyses'),
 })

@@ -1,7 +1,7 @@
 import { createRoute } from '@hono/zod-openapi'
 import { Tags } from '@/constant'
-import { getUserDataResponseSchema, getUserProjectResponseSchema, getUserRoleResponseSchema } from './schemas/response'
-import { getUserAuthorizationParamSchema, getUserProjectParamSchema, getUserRoleParamSchema } from './schemas/request'
+import { getUserAnalyseResponseSchema, getUserDataResponseSchema, getUserProjectResponseSchema, getUserRoleResponseSchema } from './schemas/response'
+import { getUserAnalyseParamSchema, getUserAuthorizationParamSchema, getUserProjectParamSchema, getUserRoleParamSchema } from './schemas/request'
 
 
 export const getCurrentDataRoute = createRoute({
@@ -90,6 +90,30 @@ export const getUserProjectRoute = createRoute({
                 },
             },
             description: 'Projets de l\'utilisateur',
+        },
+        401: {
+            description: 'Unauthorized',
+        },
+    },
+})
+
+export const getUserAnalyseRoute = createRoute({
+    method: 'get',
+    path: '/{userId}/project/{projectId}/analyse',
+    tags:[Tags.users],
+    description: 'Obtenir les analyses qu\'un utilisateur a droit de consulter par rapport un projet',
+    summary: 'Obtenir les analyses d\'un utilisateur',
+    request: {
+        params: getUserAnalyseParamSchema,
+    },
+    responses: {
+        200: {
+            content: {
+                'application/json': {
+                    schema: getUserAnalyseResponseSchema,
+                },
+            },
+            description: 'Analyses de l\'utilisateur',
         },
         401: {
             description: 'Unauthorized',
