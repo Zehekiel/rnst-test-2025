@@ -31,4 +31,5 @@ module.exports = {
     "/.history/",
     "/dist/",
   ],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
 };
