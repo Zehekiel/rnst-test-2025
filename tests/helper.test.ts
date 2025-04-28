@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getAsync, allAsync, runAsync, getCookieData, getRoleId, controlProjectPermission } from '@/helper';
+import { getAsync, allAsync, runAsync, getCookieData, getRoleId, controlPermission } from '@/helper';
 import database from '@/database'; // We will mock this
 import { Env } from 'hono/types';
 import { Context } from 'hono';
@@ -272,8 +272,8 @@ describe('Database Helpers', () => {
         });
     });
 
-    // --- Tests for controlProjectPermission ---
-    describe('controlProjectPermission', () => {
+    // --- Tests for controlPermission ---
+    describe('controlPermission', () => {
         const userId = 'user-42';
         const projectId = 'proj-99';
         const writeAction: PermissionLevel = 'write';
@@ -290,7 +290,7 @@ describe('Database Helpers', () => {
                 return undefined; // Global role doesn't matter here
             });
 
-            const result = await controlProjectPermission(userId, projectId, writeAction);
+            const result = await controlPermission(userId, projectId, writeAction);
             expect(result).toBe(true);
             expect(mockedGetUserRole).toHaveBeenCalledTimes(2);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
@@ -304,7 +304,7 @@ describe('Database Helpers', () => {
                 return undefined;
             });
 
-            const result = await controlProjectPermission(userId, projectId, writeAction);
+            const result = await controlPermission(userId, projectId, writeAction);
             expect(result).toBe(true);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
@@ -321,7 +321,7 @@ describe('Database Helpers', () => {
             mockedIsUserHaveProjectRight.mockResolvedValue(false);
 
 
-            const result = await controlProjectPermission(userId, projectId, readAction); // Action is 'read'
+            const result = await controlPermission(userId, projectId, readAction); // Action is 'read'
             expect(result).toBe(false); // Falls through manager check, owner check, rights check
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
@@ -333,7 +333,7 @@ describe('Database Helpers', () => {
             mockedGetUserRole.mockResolvedValue(undefined); // No relevant roles
             mockedIsUserProjectOwner.mockResolvedValue(true); // IS owner
 
-            const result = await controlProjectPermission(userId, projectId, readAction);
+            const result = await controlPermission(userId, projectId, readAction);
             expect(result).toBe(true);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
@@ -346,7 +346,7 @@ describe('Database Helpers', () => {
             mockedIsUserProjectOwner.mockResolvedValue(false); // Not owner
             mockedIsUserHaveProjectRight.mockResolvedValue(true); // Has explicit rights
 
-            const result = await controlProjectPermission(userId, projectId, readAction);
+            const result = await controlPermission(userId, projectId, readAction);
             expect(result).toBe(true);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
@@ -359,7 +359,7 @@ describe('Database Helpers', () => {
             mockedIsUserProjectOwner.mockResolvedValue(false); // Not owner
             mockedIsUserHaveProjectRight.mockResolvedValue(false); // No explicit rights
 
-            const result = await controlProjectPermission(userId, projectId, readAction);
+            const result = await controlPermission(userId, projectId, readAction);
             expect(result).toBe(false);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
@@ -372,7 +372,7 @@ describe('Database Helpers', () => {
             mockedIsUserProjectOwner.mockResolvedValue(false);
             mockedIsUserHaveProjectRight.mockResolvedValue(true); // Has rights
 
-            const result = await controlProjectPermission(userId, projectId, undefined); // No action specified
+            const result = await controlPermission(userId, projectId, undefined); // No action specified
             expect(result).toBe(true); // Should return true based on rights check
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
             expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0"); // Manager check still happens but doesn't match
@@ -384,7 +384,7 @@ describe('Database Helpers', () => {
             const dbError = new Error('DB Error 1');
             mockedGetUserRole.mockRejectedValueOnce(dbError); // Error on first call
 
-            await expect(controlProjectPermission(userId, projectId, writeAction)).rejects.toThrow(dbError);
+            await expect(controlPermission(userId, projectId, writeAction)).rejects.toThrow(dbError);
         });
 
         it('should propagate errors from getUserRole (global)', async () => {
@@ -393,7 +393,7 @@ describe('Database Helpers', () => {
                 .mockResolvedValueOnce(undefined) // First call (project role) succeeds (returns undefined)
                 .mockRejectedValueOnce(dbError); // Second call (global role) fails
 
-            await expect(controlProjectPermission(userId, projectId, writeAction)).rejects.toThrow(dbError);
+            await expect(controlPermission(userId, projectId, writeAction)).rejects.toThrow(dbError);
         });
 
         it('should propagate errors from isUserProjectOwner', async () => {
@@ -401,7 +401,7 @@ describe('Database Helpers', () => {
             mockedGetUserRole.mockResolvedValue(undefined); // Role checks pass (no relevant roles)
             mockedIsUserProjectOwner.mockRejectedValueOnce(dbError); // Owner check fails
 
-            await expect(controlProjectPermission(userId, projectId, writeAction)).rejects.toThrow(dbError);
+            await expect(controlPermission(userId, projectId, writeAction)).rejects.toThrow(dbError);
         });
     });
 });

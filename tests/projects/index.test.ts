@@ -5,7 +5,7 @@ import {
     getCookieData,
     allAsync,
     getAsync,
-    controlProjectPermission,
+    controlPermission,
     getRoleId,
 } from '@/helper';
 import {
@@ -23,7 +23,7 @@ jest.mock('@/helper', () => ({
     getCookieData: jest.fn(),
     allAsync: jest.fn(),
     getAsync: jest.fn(),
-    controlProjectPermission: jest.fn(),
+    controlPermission: jest.fn(),
     getRoleId: jest.fn((roleName: string) => { // Simple mock for getRoleId
         if (roleName === 'Admin') return 1;
         if (roleName === 'Manager') return 2;
@@ -50,7 +50,7 @@ const mockedGetCookieData = getCookieData as jest.Mock;
 const mockedGetUserRole = getUserRole as jest.Mock;
 const mockedAllAsync = allAsync as jest.Mock;
 const mockedGetAsync = getAsync as jest.Mock;
-const mockedControlProjectPermission = controlProjectPermission as jest.Mock;
+const mockedControlProjectPermission = controlPermission as jest.Mock;
 const mockedGetRoleId = getRoleId as jest.Mock;
 const mockedAddProject = addProject as jest.Mock;
 const mockedAddProjectPolicies = addProjectPolicies as jest.Mock;
@@ -259,7 +259,7 @@ describe('Project Routes', () => {
             expect(mockedGetAsync).not.toHaveBeenCalled();
         });
 
-        it('should return 500 if controlProjectPermission fails (example)', async () => {
+        it('should return 500 if controlPermission fails (example)', async () => {
             mockedControlProjectPermission.mockRejectedValueOnce(new Error('Permission check error'));
 
             const res = await app.request(`/projects/${projectId}`);

@@ -6,18 +6,8 @@ export const getAnalysesQuerySchema = z.object({
         .describe('ID du projet')
 });
 
-export const getAnalysisQuerySchema = z.object({
-    projectId: z.string()
-        .min(1)
-        .describe('ID du projet'),
-    analysisId: z.string()
-        .min(1)
-        .describe('ID de l\'analyse')
-});
-
-
 export const postAnalysisBodySchema = z.object({
-    analysisId: z.string()
+    analysisName: z.string()
         .min(1)
         .describe('Nom de l\'analyse'),
     users: z.array(
@@ -29,3 +19,13 @@ export const postAnalysisBodySchema = z.object({
         .optional()
         .describe('Tableau d\'utilisateurs à ajouter au projet'),
     });
+
+    export const getAnalysisQuerySchema = z.object({
+        projectId: z.string()
+            .min(1)
+            .describe('ID du projet'),
+        analysisId: z.string()
+            .min(1)
+            .describe('ID de l\'analyse')
+    });
+    

@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { deleteProjectRoute, getProjectRoute, getProjectsRoute, postProjectRoute, updateProjectRoute } from '@/projects/routes'
-import { allAsync, controlProjectPermission, getAsync, getCookieData, getRoleId } from '@/helper'
+import { allAsync, controlPermission, getAsync, getCookieData, getRoleId } from '@/helper'
 import { Project } from '@/types'
 import { addProject, addProjectPolicies, addUserProjectRight, deleteProject, getAllProjectAllow, updateProject } from './helper'
 import { getUserRole, addUser } from '@/users/helper'
@@ -43,7 +43,7 @@ project.openapi(postProjectRoute, async (c) => {
         const { userId } = await getCookieData(c)
         const { project, users } = body
 
-        const hasPermission = await controlProjectPermission(userId, "", "write");
+        const hasPermission = await controlPermission({userId, projectId:"", action: "write"});
 
         if (!hasPermission) {
             return c.json({
@@ -84,7 +84,7 @@ project.openapi(getProjectRoute, async (c) => {
     const { projectId } = c.req.valid('param')
     const { userId } = await getCookieData(c)
 
-    const hasPermission = await controlProjectPermission(userId, projectId);
+    const hasPermission = await controlPermission({userId, projectId});
     
     if (hasPermission) {
         const sql = 'SELECT * FROM projects WHERE id = ?';
@@ -105,7 +105,7 @@ project.openapi(deleteProjectRoute, async (c) => {
     const { projectId } = c.req.valid('param')
     const { userId } = await getCookieData(c)
 
-    const hasPermission = await controlProjectPermission(userId, projectId);
+    const hasPermission = await controlPermission({userId, projectId});
     
     if (hasPermission) {
         await deleteProject(projectId)
@@ -127,7 +127,7 @@ project.openapi(updateProjectRoute, async (c) => {
     const body = c.req.valid('json');
     const { project } = body
 
-    const hasPermission = await controlProjectPermission(userId, projectId);
+    const hasPermission = await controlPermission({userId, projectId});
 
     if (!hasPermission) {
         return c.json({

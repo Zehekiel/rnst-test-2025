@@ -28,30 +28,6 @@ export const getAnalysesRoute = createRoute({
     },
 })
 
-export const getAnalysisRoute = createRoute({
-    method: 'get',
-    path: 'projects/{projectId}/analyses/{analysisId}',
-    tags:[Tags.analysis],
-    description: "Récupérer une analyse d'un projet dans la base de données accessible par l’utilisateur connecté",
-    summary: 'Récupérer une analyse',
-    request: {
-        params: getAnalysisQuerySchema,
-    },
-    responses: {
-        200: {
-            content: {
-                'application/json': {
-                    schema: analysisResponseSchema,
-                },
-            },
-            description: "Récupérer l'id d'une analyse",
-        },
-        401: {
-            description: 'Unauthorized',
-        },
-    },
-})
-
 export const postAnalysisRoute = createRoute({
     method: 'post',
     path: 'projects/{projectId}/analyses',
@@ -77,6 +53,30 @@ export const postAnalysisRoute = createRoute({
                 },
             },
             description: 'Analyse créée',
+        },
+        401: {
+            description: 'Unauthorized',
+        },
+    },
+})
+
+export const getAnalysisRoute = createRoute({
+    method: 'get',
+    path: 'projects/{projectId}/analyses/{analysisId}',
+    tags:[Tags.analysis],
+    description: "Récupérer une analyse d'un projet dans la base de données accessible par l’utilisateur connecté",
+    summary: 'Récupérer une analyse',
+    request: {
+        params: getAnalysisQuerySchema,
+    },
+    responses: {
+        200: {
+            content: {
+                'application/json': {
+                    schema: analysisResponseSchema,
+                },
+            },
+            description: "Récupérer l'id d'une analyse",
         },
         401: {
             description: 'Unauthorized',

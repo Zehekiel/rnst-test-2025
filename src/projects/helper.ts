@@ -1,5 +1,5 @@
 import { roles, actions } from "@/constant";
-import { allAsync, runAsync } from "@/helper";
+import { allAsync, getAsync, runAsync } from "@/helper";
 import { Project } from "@/types";
 
 export async function deleteProject(projectId: string) {
@@ -111,5 +111,15 @@ export async function updateProject(projectId: string, name: string) {
         return await runAsync(sql, [name, projectId]);
     } catch (error) {
         throw new Error(`Erreur lors de la mise à jour du projet : ${error}`);
+    }
+}
+
+export async function getProject(projectId: string): Promise<Project | undefined> {
+    try{
+        const sql = 'SELECT * FROM projects WHERE id = ?';
+        const project = await getAsync<Project>(sql, [projectId]);
+        return project;
+    } catch (error) {
+        throw new Error(`Erreur lors de la récupération du projet : ${error}`);
     }
 }
