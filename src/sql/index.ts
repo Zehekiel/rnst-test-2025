@@ -65,6 +65,13 @@ databaseRoute.openapi(getInitSQLRoute, async (c) => {
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'update')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'delete')`);
             // Add project policies for manager
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 2, 'write')`);
+
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (1, 2, 'write')`);
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (1, 2, 'read')`);
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (1, 2, 'update')`);
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (1, 2, 'delete')`);
+
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (2, 2, 'write')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (2, 2, 'read')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (2, 2, 'update')`);
@@ -80,6 +87,7 @@ databaseRoute.openapi(getInitSQLRoute, async (c) => {
             database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (0, 1, 'update')`);
             database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (0, 1, 'delete')`);
             // Add analysis policies for manager
+            database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (1, 2, 'read')`);
             database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (2, 2, 'read')`);
             // Add analysis policies for reader
             database.run(`INSERT INTO analysis_policies (analysis_id, role_id, permission_level) VALUES (3, 3, 'read')`);
@@ -87,17 +95,19 @@ databaseRoute.openapi(getInitSQLRoute, async (c) => {
 
         database.serialize(() => {
             // Add project right for current user who initialize the database
-            database.run(`INSERT INTO rights_project (user_id, role_id, project_id) VALUES (${userId}, 1, 1)`);
+            database.run(`INSERT INTO rights_project (user_id, role_id, project_id) VALUES (${userId}, 1, 0)`);
             // Add project right for manager user
-            database.run(`INSERT INTO rights_project (user_id, role_id, project_id) VALUES (2, 2, 2)`);
+            database.run(`INSERT INTO rights_project (user_id, role_id, project_id) VALUES (2, 1, 1)`);
+            database.run(`INSERT INTO rights_project (user_id, role_id, project_id) VALUES (2, 1, 2)`);
             // Add project right for reader user
             database.run(`INSERT INTO rights_project (user_id, role_id, project_id) VALUES (3, 3, 3)`);
         })
 
         database.serialize(() => {
             // Add analysis right for current user who initialize the database
-            database.run(`INSERT INTO rights_analysis (user_id, role_id, analysis_id) VALUES (${userId}, 1, 1)`);
+            database.run(`INSERT INTO rights_analysis (user_id, role_id, analysis_id) VALUES (${userId}, 1, 0)`);
             // Add analysis right for manager user
+            database.run(`INSERT INTO rights_analysis (user_id, role_id, analysis_id) VALUES (2, 2, 1)`);
             database.run(`INSERT INTO rights_analysis (user_id, role_id, analysis_id) VALUES (2, 2, 2)`);
             // Add analysis right for reader user
             database.run(`INSERT INTO rights_analysis (user_id, role_id, analysis_id) VALUES (3, 3, 2)`);

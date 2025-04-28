@@ -18,6 +18,7 @@ export const projectTable = `
         name TEXT NOT NULL,
         owner_id INTEGER NOT NULL,
         FOREIGN KEY (owner_id) REFERENCES users(id) -- Qui a créé le projet (propriétaire)
+        UNIQUE (name)
     )
 `;
 

@@ -125,10 +125,10 @@ describe('SQL Database Routes', () => {
 
             // Verify database operations
             expect(mockDbSerialize).toHaveBeenCalledTimes(9);
+            expect(mockDbRun).toHaveBeenCalledTimes(50);
             expect(mockDbRun).toHaveBeenCalledWith(userTable);
             expect(mockDbRun).toHaveBeenCalledWith(roleTable);
             expect(mockDbRun).toHaveBeenCalledWith(`INSERT INTO users (id, name) VALUES (${mockUserId}, '${mockUserName}')`);
-            expect(mockDbRun).toHaveBeenCalledWith(`INSERT INTO rights_analysis (user_id, role_id, analysis_id) VALUES (${mockUserId}, 1, 1)`);
         });
 
         it('should return 500 if cookie is missing or invalid', async () => {

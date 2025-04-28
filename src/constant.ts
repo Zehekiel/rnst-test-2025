@@ -10,4 +10,11 @@ export const cookieName = 'rnest_user'
 
 export const secret = process.env.GITHUB_SECRET ?? 'GITHUB_SECRET is not defined'
 
-export const roles = {"administrateur": 'Admin', "Manager": 'Man', "Reader": 'Reader'}
+export const roles = {"administrateur": 'Admin', "Manager": 'Manager', "Reader": 'Reader'}
+
+export const actions = {
+    read: 'read',
+    write: 'write',
+    update: 'update',
+    delete: 'delete'
+} as const

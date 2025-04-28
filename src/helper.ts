@@ -1,5 +1,9 @@
 import database from "@/database";
-import { UserRole } from "./types";
+import { cookieName, roles, secret } from "./constant";
+import { getSignedCookie } from "hono/cookie";
+import { Context, Env } from "hono";
+import { getUserRole, isUserHaveProjectRight, isUserProjectOwner } from "./users/helper";
+import { PermissionLevel } from "./types";
 
 // Wrapper pour db.get
 export function getAsync<T = unknown>(sql: string, params?: unknown[]): Promise<T | undefined> {
@@ -29,60 +33,59 @@ export function allAsync<T = unknown>(sql: string, params?: unknown[]): Promise<
     });
 }
 
-export async function getUserRole(userId: string, projectId?: string, analysisId?: string): Promise<string | undefined> {
-    if (projectId !== "{projectId}") {
-        const projectSql =`
-            SELECT
-                r.name AS role_name
-            FROM
-                rights_project rp
-            JOIN
-                roles r ON rp.role_id = r.id
-            WHERE
-                rp.user_id = ? AND rp.project_id = ?;
-        `;
-        const userRole = await getAsync<UserRole>(projectSql, [userId, projectId]);
-        return userRole?.role_name
-    }
-
-    if (analysisId !== "{analysisId}") {
-        const analyseSql = `
-            SELECT
-                r.name AS role_name
-            FROM
-                rights_analysis ra
-            JOIN
-                roles r ON ra.role_id = r.id
-            WHERE
-                ra.user_id = ? AND ra.analysis_id = ?;
-        `;
-        const userRole = await getAsync<UserRole>(analyseSql, [userId, analysisId]);
-        return userRole?.role_name
-    }
-
-    return undefined
+export function runAsync(sql: string, params?: unknown[]): Promise<{ lastID: number; changes: number }> {
+    return new Promise((resolve, reject) => {
+        // Utilise function() pour accéder à this.lastID et this.changes
+        database.run(sql, params, function (err: Error | null) {
+            if (err) {
+                reject(err);
+            } else {
+                // Retourne l'ID de la dernière ligne insérée et le nombre de lignes modifiées
+                resolve({ lastID: this.lastID, changes: this.changes });
+            }
+        });
+    });
 }
 
-export async function isUserProjectOwner(userId: string | number, projectId: string | number): Promise<boolean> {
-    const sql = `
-        SELECT EXISTS (
-            SELECT 1
-            FROM projects
-            WHERE id = ? AND owner_id = ?
-        ) AS is_owner;
-    `;
-    const result = await getAsync<{ is_owner: 0 | 1 }>(sql, [projectId, userId]);
-    return !!result?.is_owner;
+export async function getCookieData(context: Context<Env, "/", Record<string, unknown>>) {
+    const cookie = await getSignedCookie(context, secret)
+    const user = cookie[cookieName] || '{}'
+    const userId = JSON.parse(user).id
+    const userName = JSON.parse(user).name
+    return { userId, userName }
 }
 
-export async function isUserAnalyseOwner(userId: string | number, analysisId: string | number): Promise<boolean> {
-    const sql = `
-        SELECT EXISTS (
-            SELECT 1
-            FROM analyses
-            WHERE id = ? AND owner_id = ?
-        ) AS is_owner;
-    `;
-    const result = await getAsync<{ is_owner: 0 | 1 }>(sql, [analysisId, userId]);
-    return !!result?.is_owner;
+export function getRoleId(roleName: string): number {
+    const roleId: number = Object.values(roles).reduce((acc, role, index) => {
+        if (role === roleName) {
+            return index + 1;
+        }
+        return acc;
+    }, -1);
+    if (roleId === -1) {
+        throw new Error(`Rôle ${roleName} non valide`);
+    }
+    return roleId
+};
+
+export async function controlProjectPermission(userId: string, projectId: string, action?: PermissionLevel): Promise<boolean> {
+    const role = await getUserRole(userId, projectId);
+    const userRole = await getUserRole(userId, "0");
+
+    if (role === "admin") {
+        return true;
+    }
+
+    if (action){
+        if (userRole === "manager" && role !== "admin" && (action === "write")) {
+            return true;
+        }
+    }
+
+    const isOwner = await isUserProjectOwner(userId, projectId);
+    if (isOwner) {
+        return true;
+    }
+
+    return isUserHaveProjectRight(userId, projectId);
 }

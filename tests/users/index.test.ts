@@ -1,16 +1,21 @@
 import { Hono } from 'hono';
 import { cookieName, secret } from '@/constant'; // Import constants
 import { User } from '@/types'; // Import types
-import { getAsync, getUserRole } from '@/helper'; // Import the function to be mocked
+import { getAsync } from '@/helper'; // Import the function to be mocked
 import { getSignedCookie } from 'hono/cookie'; // Import the function to be mocked
 import usersRoute from '@/users';
+import { getUserRole } from '@/users/helper'; // Import the function to be mocked
 
 // --- Mocks ---
 // Mock the database helper function
 jest.mock('@/helper', () => ({
     getAsync: jest.fn(),
+}));
+
+jest.mock('@/users/helper', () => ({
     getUserRole: jest.fn(),
 }));
+
 // Mock the cookie function
 jest.mock('hono/cookie', () => ({
     getSignedCookie: jest.fn(),

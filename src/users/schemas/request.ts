@@ -27,3 +27,8 @@ export const getUserAuthorizationParamSchema = z.object({
     userId: z.string().describe('ID de l\'utilisateur'),
     action: z.enum(["read", "write", "delete", "update"]).describe('Type d\'action à vérifier')
 });
+
+export const getUserProjectParamSchema = z.object({
+    userId: z.string()
+        .describe('ID de l\'utilisateur dont on veut obtenir le rôle'),
+})

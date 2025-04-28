@@ -17,8 +17,8 @@ export const getAllProjectResponseSchema = z.object({
             id: z.string().describe("ID du projet"),
             name: z.string().describe("Nom du projet"),
             owner_id: z.string().describe("ID du propriétaire du projet"),
-        }).describe("Message de confirmation d'initialisation de la base de données"),
-    ).describe("Liste des projets de l'utilisateur"),
+        }).describe("Objets contenant les informations sur les projets"),
+    ).describe("Liste des projets"),
 });
 
 export const getAllAnalysisResponseSchema = z.object({
@@ -29,6 +29,6 @@ export const getAllAnalysisResponseSchema = z.object({
             name: z.string().describe("Nom du projet"),
             project_id: z.string().describe("ID du projet"),
             owner_id: z.string().describe("ID du propriétaire du projet"),
-        }).describe("Message de confirmation d'initialisation de la base de données"),
-    ).describe("Liste des projets de l'utilisateur"),
+        }).describe("Objets contenant les informations sur les analyses"),
+    ).describe("Tableau d'objets contenant les informations sur les analyses"),
 });
