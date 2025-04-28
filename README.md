@@ -157,7 +157,6 @@ Cette structure assure une gestion centralisée et cohérente des permissions, t
 
 - **Gestion des erreurs** : Améliorer la gestion des erreurs pour fournir des messages d'erreur plus détaillés et utiles. Ainsi qu'utiliser une bibliothèque de gestion des erreurs pour centraliser la gestion des erreurs dans l'application.
 - **Internationalisation** : Ajouter la prise en charge de plusieurs langues pour l'interface utilisateur et les messages d'erreur.
-- **Accessibilité** : Améliorer l'accessibilité de l'interface utilisateur pour les utilisateurs ayant des besoins spécifiques.
 - **Tests** : Ajouter des tests unitaires et d'intégration pour couvrir tous les cas d'utilisation de l'application.
 - **Sécurité** : Ajouter des mesures de sécurité supplémentaires, comme la protection contre les attaques CSRF et XSS.
 - **Optimisation des performances** : Optimiser les requêtes SQL pour améliorer les performances de l'application.
