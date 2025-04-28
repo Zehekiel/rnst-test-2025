@@ -19,3 +19,9 @@ export const postProjectBodySchema = z.object({
         .optional()
         .describe('Tableau d\'utilisateurs à ajouter au projet'),
 });
+
+export const putProjectBodySchema = z.object({
+    project: z.object({
+        name: z.string().describe('Nom du projet'),
+    }),
+});

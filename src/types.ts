@@ -18,8 +18,8 @@ export interface Analysis {
 }
 
 export type Action =
-    'project:create' | 'project:read' | 'project:update' | 'project:delete' |
-    'analysis:create' | 'analysis:read' | 'analysis:update' | 'analysis:delete';
+    'project:write' | 'project:read' | 'project:update' | 'project:delete' |
+    'analysis:write' | 'analysis:read' | 'analysis:update' | 'analysis:delete';
 
 export type Resource = Project | Analysis | null;
 

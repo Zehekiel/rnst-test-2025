@@ -20,3 +20,13 @@ export const postProjectResponseSchema = z.object({
         users: z.string().optional().describe("Message de confirmation d'ajout d'utilisateur"),
     }),
 });
+
+export const deleteProjectResponseSchema = z.object({
+    success: z.boolean(),
+    data: z.string().describe("Message de confirmation de suppression de projet"),
+});
+
+export const putProjectResponseSchema = z.object({
+    success: z.boolean(),
+    data: z.string().describe("Message de confirmation de modification de projet"),
+});

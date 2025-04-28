@@ -1,7 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { getProjectRoute, getProjectsRoute, postProjectRoute } from '@/projects/routes'
-import { addProject, addProjectPolicies, addUser, addUserProjectRight, allAsync, getAllProjectAllow, getCookieData, getRoleId, getUserRole, isUserProjectOwner } from '@/helper'
+import { deleteProjectRoute, getProjectRoute, getProjectsRoute, postProjectRoute, updateProjectRoute } from '@/projects/routes'
+import { allAsync, controlProjectPermission, getAsync, getCookieData, getRoleId } from '@/helper'
 import { Project } from '@/types'
+import { addProject, addProjectPolicies, addUserProjectRight, deleteProject, getAllProjectAllow, updateProject } from './helper'
+import { getUserRole, addUser } from '@/users/helper'
 
 const project = new OpenAPIHono()
 
@@ -40,6 +42,16 @@ project.openapi(postProjectRoute, async (c) => {
         const body = c.req.valid('json');
         const { userId } = await getCookieData(c)
         const { project, users } = body
+
+        const hasPermission = await controlProjectPermission(userId, "", "write");
+
+        if (!hasPermission) {
+            return c.json({
+                success: false,
+                message: "Vous n'avez pas accès à créer un projet",
+            }, 403)
+        }
+
         const {newProjectId} = await addProject(project.name, userId)
         await addProjectPolicies(newProjectId)
 
@@ -68,15 +80,66 @@ project.openapi(postProjectRoute, async (c) => {
     }
 })
 
-project.openapi(getProjectRoute, (c) => {
+project.openapi(getProjectRoute, async (c) => {
     const { projectId } = c.req.valid('param')
-    return c.json({
-        success: true,
-        data: projectId,
-    })
+    const { userId } = await getCookieData(c)
+
+    const hasPermission = await controlProjectPermission(userId, projectId);
+    
+    if (hasPermission) {
+        const sql = 'SELECT * FROM projects WHERE id = ?';
+        const project = await getAsync<Project>(sql, [projectId]);
+        return c.json({
+            success: true,
+            data: project,
+        })
+    } else {
+        return c.json({
+            success: false,
+            message: "Vous n'avez pas accès à ce projet",
+        }, 403)
+    }
 })
 
+project.openapi(deleteProjectRoute, async (c) => {
+    const { projectId } = c.req.valid('param')
+    const { userId } = await getCookieData(c)
 
+    const hasPermission = await controlProjectPermission(userId, projectId);
+    
+    if (hasPermission) {
+        await deleteProject(projectId)
+        return c.json({
+            success: true,
+            data: `Projet ${projectId} supprimé`,
+        })
+    }
 
+    return c.json({
+        success: false,
+        message: "Vous n'avez pas accès à supprimer ce projet",
+    }, 403)
+})
+
+project.openapi(updateProjectRoute, async (c) => {
+    const { projectId } = c.req.valid('param')
+    const { userId } = await getCookieData(c)
+    const body = c.req.valid('json');
+    const { project } = body
+
+    const hasPermission = await controlProjectPermission(userId, projectId);
+
+    if (!hasPermission) {
+        return c.json({
+            success: false,
+            message: "Vous n'avez pas accès à modifier ce projet",
+        }, 403)
+    }
+    await updateProject(projectId, project.name)
+    return c.json({
+        success: true,
+        data:  `Projet ${project.name} modifié`,
+    })
+})
 
 export default project;

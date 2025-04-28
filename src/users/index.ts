@@ -2,8 +2,10 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import { getCurrentDataRoute, getUserAuthorizationRoute, getUserProjectRoute, getUserRoleRoute } from './route'
 import { getSignedCookie } from 'hono/cookie';
 import { cookieName, secret } from '@/constant';
-import { allAsync, getAllProjectAllow, getAsync, getUserRole, isUserAnalyseOwner, isUserProjectOwner } from '@/helper';
+import { allAsync, getAsync } from '@/helper';
 import { Project, User, UserRole } from '@/types';
+import { getAllProjectAllow } from '@/projects/helper';
+import { getUserRole, isUserProjectOwner, isUserAnalyseOwner } from './helper';
 
 const usersRoute = new OpenAPIHono()
 

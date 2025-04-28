@@ -65,6 +65,8 @@ databaseRoute.openapi(getInitSQLRoute, async (c) => {
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'update')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 1, 'delete')`);
             // Add project policies for manager
+            database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (0, 2, 'write')`);
+
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (1, 2, 'write')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (1, 2, 'read')`);
             database.run(`INSERT INTO project_policies (project_id, role_id, permission_level) VALUES (1, 2, 'update')`);
