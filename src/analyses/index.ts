@@ -160,4 +160,5 @@ analysis.openapi(updateAnalysisRoute, async (c) => {
         }, 500)
     }
 })
+
 export default analysis
