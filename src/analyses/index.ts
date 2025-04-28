@@ -30,7 +30,7 @@ analysis.openapi(getAnalysesRoute, async(c) => {
             data:  projects,
         })
     } catch (error) {
-        console.error("getProjectsRoute error: ", error);
+        console.error("getAnalysesRoute error: ", error);
         return c.json({
             success: false,
             message: "Erreur lors de la récupération des projets",
