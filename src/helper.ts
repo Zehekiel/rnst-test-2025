@@ -1,8 +1,9 @@
 import database from "@/database";
 import { Project, UserRole } from "./types";
-import { cookieName, secret } from "./constant";
+import { actions, cookieName, roles, secret } from "./constant";
 import { getSignedCookie } from "hono/cookie";
 import { Context, Env } from "hono";
+import { useActionState } from "hono/jsx";
 
 // Wrapper pour db.get
 export function getAsync<T = unknown>(sql: string, params?: unknown[]): Promise<T | undefined> {
@@ -27,6 +28,20 @@ export function allAsync<T = unknown>(sql: string, params?: unknown[]): Promise<
             } else {
                 // Retourne un tableau de lignes (peut être vide si rien n'est trouvé)
                 resolve(rows);
+            }
+        });
+    });
+}
+
+export function runAsync(sql: string, params?: unknown[]): Promise<{ lastID: number; changes: number }> {
+    return new Promise((resolve, reject) => {
+        // Utilise function() pour accéder à this.lastID et this.changes
+        database.run(sql, params, function (err: Error | null) {
+            if (err) {
+                reject(err);
+            } else {
+                // Retourne l'ID de la dernière ligne insérée et le nombre de lignes modifiées
+                resolve({ lastID: this.lastID, changes: this.changes });
             }
         });
     });
@@ -113,4 +128,101 @@ export async function getAllProjectAllow(userId: string): Promise<Project[]> {
         params.push(userId, userId); // Add userId twice for the UNION query
         const projects = await allAsync<Project>(sql, params);
         return projects
+}
+
+export async function addProject(name: string, ownerId: string): Promise<{ newProjectId: number }> {
+    
+    try{   
+        const sql = `
+            INSERT INTO projects (name, owner_id)
+            VALUES (?, ?);
+            ON CONFLICT(name) DO NOTHING; 
+        `;
+        const params = [name, ownerId];
+        const result = await runAsync(sql, params);
+        const { lastID } = result;
+        return { newProjectId:lastID }
+    } catch (error) {
+        throw new Error(`Erreur lors de l'ajout du projet : ${error}`);
+    }
+}
+
+export async function addProjectPolicies(projectId: number) {
+    const errors: string[] = [];
+    const insertSql = `
+        INSERT INTO project_policies (project_id, role_id, permission_level)
+        VALUES (?, ?, ?);
+    `;
+
+    try{
+        const insertPromises: Promise<unknown>[] = []; 
+        Object.values(roles).forEach(async(_, index) => {
+            // Ajoute qu'une politique de lecture pour le rôle "Reader"
+            if (index === 2) {
+                const params = [projectId, 3, "read"];
+                insertPromises.push(
+                    runAsync(insertSql, params).catch(err => {
+                        // Si une insertion échoue, enregistre l'erreur
+                        const errorMessage = `Error adding policy (Project: ${projectId}, Role: ${index}, Permission: ${"read"}): ${err.message}`;
+                        errors.push(errorMessage);
+                    })
+                );
+                return
+            }
+            Object.values(actions).forEach(async(action) => {
+                const params = [projectId, index + 1, action];
+                insertPromises.push(
+                    runAsync(insertSql, params).catch(err => {
+                        // Si une insertion échoue, enregistre l'erreur
+                        const errorMessage = `Error adding policy (Project: ${projectId}, Role: ${index}, Permission: ${action}): ${err.message}`;
+                        errors.push(errorMessage);
+                    })
+                );
+            })
+        })
+
+        return await Promise.all(insertPromises);
+    }
+    catch (error) {
+        throw new Error(`Erreur lors de l'ajout des politiques de projet : ${error}/n ${errors.join('\n')}`);
+    }
+}
+
+export async function addUserProjectRight(userId: number, roleId: number, projectId: number) {
+    try{
+        const sql = `
+            INSERT INTO rights_project (user_id, role_id, project_id)
+            VALUES (?, ?, ?);
+        `;
+        const params = [userId, roleId, projectId];
+        return await runAsync(sql, params);
+    } catch (error) {
+        throw new Error(`Erreur lors de l'ajout du droit utilisateur : ${error}`);
+    }
+}
+
+export function getRoleId(roleName: string): number {
+    const roleId: number = Object.values(roles).reduce((acc, role, index) => {
+        if (role === roleName) {
+            return index + 1;
+        }
+        return acc;
+    }, -1);
+    if (roleId === -1) {
+        throw new Error(`Rôle ${roleName} non valide`);
+    }
+    return roleId
+};
+
+export async function addUser(name: string){
+    try{
+        const sql = `
+            INSERT INTO users (name)
+            VALUES (?);
+        `;
+        const params = [name];
+        return await runAsync(sql, params);
+    } catch (error) {
+        throw new Error(`Erreur lors de l'ajout de l'utilisateur : ${error}`);
+    }
 }

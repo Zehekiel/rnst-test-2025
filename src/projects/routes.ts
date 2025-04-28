@@ -53,7 +53,7 @@ export const postProjectRoute = createRoute({
     path: '/',
     tags: [Tags.project],
     summary: 'Créer un nouveau projet',
-    description: "Créer un nouveau projet et potentiellement donner l'accès à une liste d'utilisateur",
+    description: "Créer un nouveau projet et potentiellement donner l'accès à une liste d'utilisateur. Les rôles attribués aux utilisateurs sont : Admin, Manager, Reader. Si aucun utilisateur n'est spécifié, le projet sera créé sans utilisateurs associés.",
     request: {
         body: {
             content: {

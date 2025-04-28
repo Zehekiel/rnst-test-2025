@@ -147,5 +147,6 @@ usersRoute.openapi(getUserProjectRoute, async (c) => {
         }, 500)
     }
 })
+
 export default usersRoute;
 
