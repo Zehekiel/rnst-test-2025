@@ -1,7 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { deleteSQLRoute, getAllAnalysisRoute, getAllProjectRoute, getInitSQLRoute } from './route'
+import { deleteSQLRoute, getAllAnalysisRoute, getAllProjectRoute, postInitSQLRoute } from './route'
 import database from '@/database';
-import { analysisPolicyTable,rightsProjectTable, rightsAnalysisTable,analysisTable, projectPolicyTable, projectTable, roleTable, userTable } from '@/sql/modele';
+import { analysisPolicyTable,rightsProjectTable, rightsAnalysisTable,analysisTable, projectPolicyTable, projectTable, roleTable, userTable } from '@/db/modele';
 import { getSignedCookie } from 'hono/cookie';
 import { cookieName, secret } from '@/constant';
 import { allAsync } from '../helper';
@@ -10,7 +10,7 @@ import { Analysis, Project } from '@/types';
 const databaseRoute = new OpenAPIHono()
 
 
-databaseRoute.openapi(getInitSQLRoute, async (c) => {
+databaseRoute.openapi(postInitSQLRoute, async (c) => {
     try {
         
         const cookie = await getSignedCookie(c, secret)

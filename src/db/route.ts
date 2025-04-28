@@ -2,8 +2,8 @@ import { createRoute } from '@hono/zod-openapi'
 import { Tags } from '@/constant'
 import { deleteSQlResponseSchema, getAllAnalysisResponseSchema, getAllProjectResponseSchema, initSQlResponseSchema } from './schemas/response'
 
-export const getInitSQLRoute = createRoute({
-    method: 'get',
+export const postInitSQLRoute = createRoute({
+    method: 'post',
     path: '/init',
     tags:[Tags.database],
     description: 'Initialiser la base de données SQL',

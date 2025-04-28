@@ -156,7 +156,7 @@ describe('Project Routes', () => {
             expect(json.data.project).toContain('New Project ajouté');
             expect(json.data.users).toContain('Utilisateur(s) ajouté(s)');
 
-            expect(mockedControlProjectPermission).toHaveBeenCalledWith('user123', '', 'write');
+            expect(mockedControlProjectPermission).toHaveBeenCalledWith({"action": "write", "projectId": "", "userId": "user123"});
             expect(mockedAddProject).toHaveBeenCalledWith('New Project', 'user123');
             expect(mockedAddProjectPolicies).toHaveBeenCalledWith(99);
             expect(mockedAddUser).toHaveBeenCalledWith('testuser');
@@ -243,7 +243,7 @@ describe('Project Routes', () => {
             const json = await res.json();
             expect(json.success).toBe(true);
             expect(json.data).toEqual(mockProject);
-            expect(mockedControlProjectPermission).toHaveBeenCalledWith('user123', projectId.toString());
+            expect(mockedControlProjectPermission).toHaveBeenCalledWith({"projectId": "1", "userId": "user123"});
             expect(mockedGetAsync).toHaveBeenCalledWith('SELECT * FROM projects WHERE id = ?', [projectId.toString()]);
         });
 
@@ -283,7 +283,7 @@ describe('Project Routes', () => {
             const json = await res.json();
             expect(json.success).toBe(true);
             expect(json.data).toContain(`Projet ${projectId} supprimé`);
-            expect(mockedControlProjectPermission).toHaveBeenCalledWith('user123', projectId);
+            expect(mockedControlProjectPermission).toHaveBeenCalledWith({"projectId": "proj789", "userId": "user123"});
             expect(mockedDeleteProject).toHaveBeenCalledWith(projectId);
         });
 
@@ -328,7 +328,7 @@ describe('Project Routes', () => {
             const json = await res.json();
             expect(json.success).toBe(true);
             expect(json.data).toContain('Updated Project Name modifié');
-            expect(mockedControlProjectPermission).toHaveBeenCalledWith('user123', projectId);
+            expect(mockedControlProjectPermission).toHaveBeenCalledWith({"projectId": "proj101", "userId": "user123"});
             expect(mockedUpdateProject).toHaveBeenCalledWith(projectId, 'Updated Project Name');
         });
 
