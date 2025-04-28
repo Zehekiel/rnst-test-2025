@@ -19,6 +19,13 @@ export const getAnalysisQuerySchema = z.object({
 export const postAnalysisBodySchema = z.object({
     analysisId: z.string()
         .min(1)
-        .describe('ID de l\'analyse'),
-    users: z.array(z.string()).optional().describe('ID des utilisateurs')
-});
+        .describe('Nom de l\'analyse'),
+    users: z.array(
+        z.object({
+            name: z.string().describe('Nom de l\'utilisateur'),
+            role: z.enum(["Admin", "Manager", "Reader"]).describe('Rôle de l\'utilisateur dans le projet et l\'analyse'),
+        })
+    )
+        .optional()
+        .describe('Tableau d\'utilisateurs à ajouter au projet'),
+    });
