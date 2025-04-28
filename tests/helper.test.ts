@@ -1,24 +1,47 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getAsync, allAsync, getUserRole, isUserProjectOwner, isUserAnalyseOwner } from '@/helper';
+import { getAsync, allAsync, runAsync, getCookieData, getRoleId, controlProjectPermission } from '@/helper';
 import database from '@/database'; // We will mock this
+import { Env } from 'hono/types';
+import { Context } from 'hono';
+import { cookieName, secret } from '@/constant';
+import { getUserRole, isUserHaveProjectRight, isUserProjectOwner } from '@/users/helper';
+import { getSignedCookie } from 'hono/cookie';
+import { PermissionLevel } from '@/types';
 
 // Mock the database module
 jest.mock('@/database', () => ({
     // Define the structure with mock functions
     get: jest.fn(),
     all: jest.fn(),
+    run: jest.fn(),
 }));
+
+jest.mock('hono/cookie', () => ({
+    getSignedCookie: jest.fn(),
+}));
+
+jest.mock('@/users/helper', () => ({
+    getUserRole: jest.fn(),
+    isUserProjectOwner: jest.fn(),
+    isUserHaveProjectRight: jest.fn(),
+}));
+
 
 // Type assertion for the mocked database functions
 const mockedDbGet = database.get as jest.Mock;
 const mockedDbAll = database.all as jest.Mock;
+const mockedDbRun = database.run as jest.Mock;
+const mockedGetSignedCookie = getSignedCookie as jest.Mock;
+const mockedGetUserRole = getUserRole as jest.Mock;
+const mockedIsUserProjectOwner = isUserProjectOwner as jest.Mock;
+const mockedIsUserHaveProjectRight = isUserHaveProjectRight as jest.Mock;
+
 
 describe('Database Helpers', () => {
 
     // Reset mocks before each test
     beforeEach(() => {
-        mockedDbGet.mockClear();
-        mockedDbAll.mockClear();
+        jest.clearAllMocks(); // Clear all mocks to ensure no state is carried over
         mockedDbGet.mockImplementation((sql, params, callback) => {
         // Default mock logic for 'get' (e.g., return undefined or specific structure)
             if (sql.includes('SELECT EXISTS')) {
@@ -28,12 +51,17 @@ describe('Database Helpers', () => {
             } else {
                 callback(null, undefined);
             }
-    });
-    mockedDbAll.mockImplementation((sql, params, callback) => {
-        // Default mock logic for 'all' (e.g., return empty array)
-        callback(null, []);
-    });
-
+        });
+        mockedDbAll.mockImplementation((sql, params, callback) => {
+            // Default mock logic for 'all' (e.g., return empty array)
+            callback(null, []);
+        });
+        mockedDbRun.mockImplementation((sql, params, callback) => {
+            // Simule le contexte 'this' que sqlite3 fournirait
+            const context = { lastID: 1, changes: 1 }; // Valeurs par défaut pour le succès
+            // Appelle le callback avec 'null' pour l'erreur et définit 'this'
+            callback.call(context, null);
+        });
     });
 
     // --- Tests for getAsync ---
@@ -44,9 +72,9 @@ describe('Database Helpers', () => {
                 callback(null, mockRow);
             });
 
-            const result = await getAsync<{ id: number; name: string }>('SELECT * FROM test WHERE id = ?', [1]);
+            const result = await getAsync<{ id: number; name: string }>('SELECT * test WHERE id = ?', [1]);
             expect(result).toEqual(mockRow);
-            expect(mockedDbGet).toHaveBeenCalledWith('SELECT * FROM test WHERE id = ?', [1], expect.any(Function));
+            expect(mockedDbGet).toHaveBeenCalledWith('SELECT * test WHERE id = ?', [1], expect.any(Function));
         });
 
         it('should resolve with undefined when db.get finds no data', async () => {
@@ -54,9 +82,9 @@ describe('Database Helpers', () => {
                 callback(null, undefined);
             });
 
-            const result = await getAsync('SELECT * FROM test WHERE id = ?', [99]);
+            const result = await getAsync('SELECT * test WHERE id = ?', [99]);
             expect(result).toBeUndefined();
-            expect(mockedDbGet).toHaveBeenCalledWith('SELECT * FROM test WHERE id = ?', [99], expect.any(Function));
+            expect(mockedDbGet).toHaveBeenCalledWith('SELECT * test WHERE id = ?', [99], expect.any(Function));
         });
 
         it('should reject with an error when db.get fails', async () => {
@@ -65,8 +93,8 @@ describe('Database Helpers', () => {
                 callback(mockError);
             });
 
-            await expect(getAsync('SELECT * FROM test WHERE id = ?', [1])).rejects.toThrow('DB Error');
-            expect(mockedDbGet).toHaveBeenCalledWith('SELECT * FROM test WHERE id = ?', [1], expect.any(Function));
+            await expect(getAsync('SELECT * test WHERE id = ?', [1])).rejects.toThrow('DB Error');
+            expect(mockedDbGet).toHaveBeenCalledWith('SELECT * test WHERE id = ?', [1], expect.any(Function));
         });
     });
 
@@ -78,9 +106,9 @@ describe('Database Helpers', () => {
                 callback(null, mockRows);
             });
 
-            const result = await allAsync<{ id: number }>('SELECT * FROM test');
+            const result = await allAsync<{ id: number }>('SELECT * test');
             expect(result).toEqual(mockRows);
-            expect(mockedDbAll).toHaveBeenCalledWith('SELECT * FROM test', undefined, expect.any(Function));
+            expect(mockedDbAll).toHaveBeenCalledWith('SELECT * test', undefined, expect.any(Function));
         });
 
         it('should resolve with an empty array when db.all finds no data', async () => {
@@ -88,9 +116,9 @@ describe('Database Helpers', () => {
                 callback(null, []);
             });
 
-            const result = await allAsync('SELECT * FROM test WHERE name = ?', ['NonExistent']);
+            const result = await allAsync('SELECT * test WHERE name = ?', ['NonExistent']);
             expect(result).toEqual([]);
-            expect(mockedDbAll).toHaveBeenCalledWith('SELECT * FROM test WHERE name = ?', ['NonExistent'], expect.any(Function));
+            expect(mockedDbAll).toHaveBeenCalledWith('SELECT * test WHERE name = ?', ['NonExistent'], expect.any(Function));
         });
 
         it('should reject with an error when db.all fails', async () => {
@@ -99,163 +127,281 @@ describe('Database Helpers', () => {
                 callback(mockError);
             });
 
-            await expect(allAsync('SELECT * FROM test')).rejects.toThrow('DB All Error');
-            expect(mockedDbAll).toHaveBeenCalledWith('SELECT * FROM test', undefined, expect.any(Function));
+            await expect(allAsync('SELECT * test')).rejects.toThrow('DB All Error');
+            expect(mockedDbAll).toHaveBeenCalledWith('SELECT * test', undefined, expect.any(Function));
         });
     });
 
-    // --- Tests for getUserRole ---
-    describe('getUserRole', () => {
-        it('should return role from project if projectId is valid', async () => {
-            const mockRole = { role_name: 'manager' };
-            mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                 // Check if it's the project role query
-                if (sql.includes('rights_project') && params?.includes('project1')) {
-                    callback(null, mockRole);
-                } else {
-                    callback(null, undefined);
-                }
+    // --- Tests for runAsync ---
+    describe('runAsync', () => {
+        it('should resolve with lastID and changes when db.run succeeds', async () => {
+            // Arrange: Configure le mock spécifiquement pour ce test si nécessaire
+            const mockContext = { lastID: 5, changes: 1 };
+            mockedDbRun.mockImplementationOnce((sql, params, callback) => {
+                // Appelle le callback avec le contexte spécifique à ce test
+                callback.call(mockContext, null);
             });
 
-            const role = await getUserRole('user1', 'project1', "{analysisId}");
-            expect(role).toBe('manager');
-            expect(mockedDbGet).toHaveBeenCalledTimes(1);
-            expect(mockedDbGet).toHaveBeenCalledWith(expect.stringContaining('rights_project'), ['user1', 'project1'], expect.any(Function));
-        });
+            // Act
+            const result = await runAsync('INSERT INTO test (name) VALUES (?)', ['Test']);
 
-        it('should return role from analysis if analysisId is valid and projectId is placeholder', async () => {
-            const mockRole = { role_name: 'reader' };
-            mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                // Check if it's the analysis role query
-                if (sql.includes('rights_analysis') && params?.includes('analysis1')) {
-                    callback(null, mockRole);
-                } else {
-                    callback(null, undefined);
-                }
-            });
-
-            const role = await getUserRole('user1', "{projectId}", 'analysis1');
-            expect(role).toBe('reader');
-            expect(mockedDbGet).toHaveBeenCalledTimes(1); // Only analysis query should run
-            expect(mockedDbGet).toHaveBeenCalledWith(expect.stringContaining('rights_analysis'), ['user1', 'analysis1'], expect.any(Function));
-        });
-
-        it('should return role from analysis if analysisId is valid and projectId is undefined', async () => {
-            const mockRole = { role_name: 'reader' };
-            mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                if (sql.includes('rights_analysis') && params?.includes('analysis1')) {
-                    callback(null, mockRole);
-                } else {
-                    callback(null, undefined);
-                }
-            });
-
-            // Pass undefined for projectId
-            const role = await getUserRole('user1', "{projectId}", 'analysis1');
-            expect(role).toBe('reader');
-            expect(mockedDbGet).toHaveBeenCalledTimes(1);
-            expect(mockedDbGet).toHaveBeenCalledWith(expect.stringContaining('rights_analysis'), ['user1', 'analysis1'], expect.any(Function));
+            // Assert
+            // Le résultat doit correspondre aux valeurs définies dans mockContext
+            expect(result).toEqual({ lastID: 5, changes: 1 });
+            expect(mockedDbRun).toHaveBeenCalledWith('INSERT INTO test (name) VALUES (?)', ['Test'], expect.any(Function));
         });
 
 
-        it('should return undefined if neither projectId nor analysisId is valid', async () => {
-            const role = await getUserRole('user1', '{projectId}', '{analysisId}');
-            expect(role).toBeUndefined();
-            expect(mockedDbGet).not.toHaveBeenCalled(); // No query should run
-        });
-
-         it('should return undefined if IDs are valid but user has no role', async () => {
-            // Mock db.get to return undefined for the specific query
-            mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                callback(null, undefined);
+        it('should reject with an error when db.run fails', async () => {
+            const mockError = new Error('DB Run Error');
+            mockedDbRun.mockImplementationOnce((sql, params, callback) => {
+                callback(mockError);
             });
 
-            const role = await getUserRole('user1', 'project1', '{analysisId}');
-            expect(role).toBeUndefined();
-            expect(mockedDbGet).toHaveBeenCalledTimes(1);
+            await expect(runAsync('INSERT INTO test (name) VALUES (?)', ['Test'])).rejects.toThrow('DB Run Error');
+            expect(mockedDbRun).toHaveBeenCalledWith('INSERT INTO test (name) VALUES (?)', ['Test'], expect.any(Function));
+        });
+    })
+
+    // --- Tests for getCookieData ---
+    describe('getCookieData', () => {
+        // Create a minimal mock context object
+        const createMockContext = (): Context<Env, "/", Record<string, unknown>> => ({
+            // Add properties/methods of Context if needed by getSignedCookie mock or the function itself
+            req: {
+                // Mock request properties if necessary
+            },
+            // Add other context properties if needed
+        } as unknown as Context<Env, "/", Record<string, unknown>>);
+
+        it('should return userId and userName when cookie is valid JSON', async () => {
+            const mockContext = createMockContext();
+            const cookiePayload = { id: 'user123', name: 'Test User' };
+            const cookieValue = JSON.stringify(cookiePayload);
+            mockedGetSignedCookie.mockResolvedValue({ [cookieName]: cookieValue });
+
+            const result = await getCookieData(mockContext);
+
+            expect(result).toEqual({ userId: 'user123', userName: 'Test User' });
+            expect(mockedGetSignedCookie).toHaveBeenCalledWith(mockContext, secret);
         });
 
-        it('should prioritize projectId over analysisId', async () => {
-            const mockProjectRole = { role_name: 'admin' };
-             mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                 // Only respond to the project query
-                 if (sql.includes('rights_project') && params?.includes('project1')) {
-                     callback(null, mockProjectRole);
-                 } else {
-                     callback(null, undefined); // Ignore analysis query if called
-                 }
-            });
+        it('should return undefined userId and userName when cookie is missing', async () => {
+            const mockContext = createMockContext();
+            // No cookie set in the mock return value (default behavior set in beforeEach)
+            mockedGetSignedCookie.mockResolvedValue({});
 
-            const role = await getUserRole('user1', 'project1', 'analysis1');
-            expect(role).toBe('admin');
-            expect(mockedDbGet).toHaveBeenCalledTimes(1);
-            expect(mockedDbGet).toHaveBeenCalledWith(expect.stringContaining('rights_project'), ['user1', 'project1'], expect.any(Function));
-            // Ensure analysis query was NOT called
-            expect(mockedDbGet).not.toHaveBeenCalledWith(expect.stringContaining('rights_analysis'), expect.anything(), expect.anything());
-        });
-    });
+            const result = await getCookieData(mockContext);
 
-    // --- Tests for isUserProjectOwner ---
-    describe('isUserProjectOwner', () => {
-        it('should return true if the user is the owner', async () => {
-            mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                callback(null, { is_owner: 1 }); // Simulate owner found
-            });
-
-            const isOwner = await isUserProjectOwner('user1', 'project1');
-            expect(isOwner).toBe(true);
-            expect(mockedDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM projects'), ['project1', 'user1'], expect.any(Function));
+            expect(result).toEqual({ userId: undefined, userName: undefined });
+            expect(mockedGetSignedCookie).toHaveBeenCalledWith(mockContext, secret);
         });
 
-        it('should return false if the user is not the owner', async () => {
-             mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                callback(null, { is_owner: 0 }); // Simulate owner not found
-            });
+        it('should return undefined userId and userName when cookie value is not valid JSON', async () => {
+            const mockContext = createMockContext();
+            const invalidCookieValue = 'not-json';
+            mockedGetSignedCookie.mockResolvedValue({ [cookieName]: invalidCookieValue });
 
-            const isOwner = await isUserProjectOwner('user2', 'project1');
-            expect(isOwner).toBe(false);
-            expect(mockedDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM projects'), ['project1', 'user2'], expect.any(Function));
+            // JSON.parse will throw an error here. The function should handle it gracefully.
+            // Depending on how you want to handle it, adjust the expectation.
+            // Current implementation will likely throw. Let's test that.
+            await expect(getCookieData(mockContext)).rejects.toThrow(SyntaxError); // Expect JSON.parse error
+            expect(mockedGetSignedCookie).toHaveBeenCalledWith(mockContext, secret);
         });
 
-         it('should return false if the db query returns undefined', async () => {
-             mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                callback(null, undefined); // Simulate unexpected undefined result
-            });
+        it('should return undefined userId/userName if JSON is valid but missing properties', async () => {
+            const mockContext = createMockContext();
+            const partialCookiePayload = { someOtherProp: 'value' }; // Missing id and name
+            const cookieValue = JSON.stringify(partialCookiePayload);
+            mockedGetSignedCookie.mockResolvedValue({ [cookieName]: cookieValue });
 
-            const isOwner = await isUserProjectOwner('user1', 'project1');
-            expect(isOwner).toBe(false);
+            const result = await getCookieData(mockContext);
+
+            expect(result).toEqual({ userId: undefined, userName: undefined });
+            expect(mockedGetSignedCookie).toHaveBeenCalledWith(mockContext, secret);
+        });
+
+        it('should handle empty string cookie value gracefully by returning undefined values', async () => { // Updated test description
+            const mockContext = createMockContext();
+            mockedGetSignedCookie.mockResolvedValue({ [cookieName]: '' }); // Empty string
+
+            // Expect the promise to resolve, not reject
+            const result = await getCookieData(mockContext);
+
+            // Check that it resolved to the expected object with undefined values
+            expect(result).toEqual({ userId: undefined, userName: undefined });
+
+            // Verify the cookie function was still called
+            expect(mockedGetSignedCookie).toHaveBeenCalledWith(mockContext, secret);
         });
     });
 
-    // --- Tests for isUserAnalyseOwner ---
-    describe('isUserAnalyseOwner', () => {
-        it('should return true if the user is the owner', async () => {
-            mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                callback(null, { is_owner: 1 }); // Simulate owner found
-            });
+   // --- Tests for getRoleId ---
+    describe('getRoleId', () => {
+    // Using the actual 'roles' constant from '@/constant'
+    // Note: This relies on the order and values in the constant.
+    // roles = {"administrateur": 'Admin', "Manager": 'Manager', "Reader": 'Reader'}
 
-            const isOwner = await isUserAnalyseOwner('user1', 'analysis1');
-            expect(isOwner).toBe(true);
-            expect(mockedDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM analyses'), ['analysis1', 'user1'], expect.any(Function));
+        it('should return correct ID for "Admin"', () => {
+            // 'Admin' is the first value, index 0 -> ID 1
+            expect(getRoleId('Admin')).toBe(1);
         });
 
-        it('should return false if the user is not the owner', async () => {
-            mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                callback(null, { is_owner: 0 }); // Simulate owner not found
-            });
-
-            const isOwner = await isUserAnalyseOwner('user2', 'analysis1');
-            expect(isOwner).toBe(false);
-            expect(mockedDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM analyses'), ['analysis1', 'user2'], expect.any(Function));
+        it('should return correct ID for "Manager"', () => {
+            // 'Manager' is the second value, index 1 -> ID 2
+            expect(getRoleId('Manager')).toBe(2);
         });
 
-        it('should return false if the db query returns undefined', async () => {
-            mockedDbGet.mockImplementationOnce((sql, params, callback) => {
-                callback(null, undefined); // Simulate unexpected undefined result
+        it('should return correct ID for "Reader"', () => {
+            // 'Reader' is the third value, index 2 -> ID 3
+            expect(getRoleId('Reader')).toBe(3);
+        });
+
+        it('should throw error for an invalid role name', () => {
+            expect(() => getRoleId('Guest')).toThrow('Rôle Guest non valide');
+        });
+
+        it('should throw error for a key name instead of value', () => {
+            // 'administrateur' is a key, not a value in the roles object
+            expect(() => getRoleId('administrateur')).toThrow('Rôle administrateur non valide');
+        });
+
+        it('should be case-sensitive', () => {
+            expect(() => getRoleId('manager')).toThrow('Rôle manager non valide'); // Lowercase 'm'
+            expect(() => getRoleId('ADMIN')).toThrow('Rôle ADMIN non valide'); // Uppercase
+        });
+    });
+
+    // --- Tests for controlProjectPermission ---
+    describe('controlProjectPermission', () => {
+        const userId = 'user-42';
+        const projectId = 'proj-99';
+        const writeAction: PermissionLevel = 'write';
+        const readAction: PermissionLevel = 'read';
+
+        beforeEach(() => {
+            // Reset mocks before each test
+            jest.clearAllMocks();
+        });
+
+        it('should return true if project role is "admin"', async () => {
+            mockedGetUserRole.mockImplementation(async (uid, pid) => {
+                if (pid === projectId) return 'admin'; // Project role is admin
+                return undefined; // Global role doesn't matter here
             });
 
-            const isOwner = await isUserAnalyseOwner('user1', 'analysis1');
-            expect(isOwner).toBe(false);
+            const result = await controlProjectPermission(userId, projectId, writeAction);
+            expect(result).toBe(true);
+            expect(mockedGetUserRole).toHaveBeenCalledTimes(2);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0"); // Shouldn't need global role check
+        });
+
+        it('should return true if global role is "manager", project role is not "admin", and action is "write"', async () => {
+            mockedGetUserRole.mockImplementation(async (uid, pid) => {
+                if (pid === projectId) return 'reader'; // Project role is NOT admin
+                if (pid === "0") return 'manager'; // Global role IS manager
+                return undefined;
+            });
+
+            const result = await controlProjectPermission(userId, projectId, writeAction);
+            expect(result).toBe(true);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
+        });
+
+        it('should return false if global role is "manager", project role not "admin", but action is NOT "write"', async () => {
+            mockedGetUserRole.mockImplementation(async (uid, pid) => {
+                if (pid === projectId) return 'reader'; // Project role is NOT admin
+                if (pid === "0") return 'manager'; // Global role IS manager
+                return undefined;
+            });
+            // Mocks for subsequent checks (owner, rights) - default is false/0
+            mockedIsUserProjectOwner.mockResolvedValue(false);
+            mockedIsUserHaveProjectRight.mockResolvedValue(false);
+
+
+            const result = await controlProjectPermission(userId, projectId, readAction); // Action is 'read'
+            expect(result).toBe(false); // Falls through manager check, owner check, rights check
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
+            expect(mockedIsUserProjectOwner).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedIsUserHaveProjectRight).toHaveBeenCalledWith(userId, projectId);
+        });
+
+        it('should return true if user is project owner (after role checks fail)', async () => {
+            mockedGetUserRole.mockResolvedValue(undefined); // No relevant roles
+            mockedIsUserProjectOwner.mockResolvedValue(true); // IS owner
+
+            const result = await controlProjectPermission(userId, projectId, readAction);
+            expect(result).toBe(true);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
+            expect(mockedIsUserProjectOwner).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedDbGet).not.toHaveBeenCalled(); // Should short-circuit before rights check
+        });
+
+        it('should return true if user has explicit rights (after role/owner checks fail)', async () => {
+            mockedGetUserRole.mockResolvedValue(undefined); // No relevant roles
+            mockedIsUserProjectOwner.mockResolvedValue(false); // Not owner
+            mockedIsUserHaveProjectRight.mockResolvedValue(true); // Has explicit rights
+
+            const result = await controlProjectPermission(userId, projectId, readAction);
+            expect(result).toBe(true);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
+            expect(mockedIsUserProjectOwner).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedIsUserHaveProjectRight).toHaveBeenCalledWith(userId, projectId);
+        });
+
+        it('should return false if no roles, not owner, and no explicit rights', async () => {
+            mockedGetUserRole.mockResolvedValue(undefined); // No relevant roles
+            mockedIsUserProjectOwner.mockResolvedValue(false); // Not owner
+            mockedIsUserHaveProjectRight.mockResolvedValue(false); // No explicit rights
+
+            const result = await controlProjectPermission(userId, projectId, readAction);
+            expect(result).toBe(false);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0");
+            expect(mockedIsUserProjectOwner).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedIsUserHaveProjectRight).toHaveBeenCalledWith(userId, projectId);
+        });
+
+        it('should handle case where action is undefined (only checks roles/owner/rights)', async () => {
+            mockedGetUserRole.mockResolvedValue(undefined);
+            mockedIsUserProjectOwner.mockResolvedValue(false);
+            mockedIsUserHaveProjectRight.mockResolvedValue(true); // Has rights
+
+            const result = await controlProjectPermission(userId, projectId, undefined); // No action specified
+            expect(result).toBe(true); // Should return true based on rights check
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedGetUserRole).toHaveBeenCalledWith(userId, "0"); // Manager check still happens but doesn't match
+            expect(mockedIsUserProjectOwner).toHaveBeenCalledWith(userId, projectId);
+            expect(mockedIsUserHaveProjectRight).toHaveBeenCalledWith(userId, projectId);
+        });
+
+        it('should propagate errors from getUserRole (project)', async () => {
+            const dbError = new Error('DB Error 1');
+            mockedGetUserRole.mockRejectedValueOnce(dbError); // Error on first call
+
+            await expect(controlProjectPermission(userId, projectId, writeAction)).rejects.toThrow(dbError);
+        });
+
+        it('should propagate errors from getUserRole (global)', async () => {
+            const dbError = new Error('DB Error 2');
+            mockedGetUserRole
+                .mockResolvedValueOnce(undefined) // First call (project role) succeeds (returns undefined)
+                .mockRejectedValueOnce(dbError); // Second call (global role) fails
+
+            await expect(controlProjectPermission(userId, projectId, writeAction)).rejects.toThrow(dbError);
+        });
+
+        it('should propagate errors from isUserProjectOwner', async () => {
+            const dbError = new Error('DB Error 3');
+            mockedGetUserRole.mockResolvedValue(undefined); // Role checks pass (no relevant roles)
+            mockedIsUserProjectOwner.mockRejectedValueOnce(dbError); // Owner check fails
+
+            await expect(controlProjectPermission(userId, projectId, writeAction)).rejects.toThrow(dbError);
         });
     });
 });

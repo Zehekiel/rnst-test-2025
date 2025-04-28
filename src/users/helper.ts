@@ -59,6 +59,21 @@ export async function isUserAnalyseOwner(userId: string | number, analysisId: st
     return !!result?.is_owner;
 }
 
+export async function isUserHaveProjectRight(userId: string, projectId: string): Promise<boolean> {
+    const sqlRight = `
+        SELECT EXISTS (
+            SELECT 1
+            FROM rights_project
+            WHERE user_id = ? AND project_id = ?
+        ) AS has_access;
+    `;
+    const result = await getAsync<{ has_access: 0 | 1 }>(sqlRight, [userId, projectId]);
+    if (result?.has_access) {
+        return true;
+    }
+    return false;
+
+}
 export async function addUser(name: string){
     try{
         const sql = `

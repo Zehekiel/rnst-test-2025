@@ -2,8 +2,8 @@ import database from "@/database";
 import { cookieName, roles, secret } from "./constant";
 import { getSignedCookie } from "hono/cookie";
 import { Context, Env } from "hono";
-import { getUserRole, isUserProjectOwner } from "./users/helper";
-import { Action, PermissionLevel } from "./types";
+import { getUserRole, isUserHaveProjectRight, isUserProjectOwner } from "./users/helper";
+import { PermissionLevel } from "./types";
 
 // Wrapper pour db.get
 export function getAsync<T = unknown>(sql: string, params?: unknown[]): Promise<T | undefined> {
@@ -47,7 +47,6 @@ export function runAsync(sql: string, params?: unknown[]): Promise<{ lastID: num
     });
 }
 
-
 export async function getCookieData(context: Context<Env, "/", Record<string, unknown>>) {
     const cookie = await getSignedCookie(context, secret)
     const user = cookie[cookieName] || '{}'
@@ -81,24 +80,12 @@ export async function controlProjectPermission(userId: string, projectId: string
         if (userRole === "manager" && role !== "admin" && (action === "write")) {
             return true;
         }
-
     }
 
     const isOwner = await isUserProjectOwner(userId, projectId);
     if (isOwner) {
         return true;
     }
-    const sqlRight = `
-        SELECT EXISTS (
-            SELECT 1
-            FROM rights_project
-            WHERE user_id = ? AND project_id = ?
-        ) AS has_access;
-    `;
-    const result = await getAsync<{ has_access: 0 | 1 }>(sqlRight, [userId, projectId]);
-    if (result?.has_access) {
-        return true;
-    }
 
-    return false;
+    return isUserHaveProjectRight(userId, projectId);
 }
