@@ -28,4 +28,20 @@ export const postAnalysisBodySchema = z.object({
             .min(1)
             .describe('ID de l\'analyse')
     });
-    
+
+export const updateAnalysisBodySchema = z.object({
+    analysis: z.object({
+        name: z.string()
+            .min(1)
+            .describe('Nom de l\'analyse'),
+    })
+});
+
+export const deleteAnalysisQuerySchema = z.object({
+    projectId: z.string()
+        .min(1)
+        .describe('ID du projet'),
+    analysisId: z.string()
+        .min(1)
+        .describe('ID de l\'analyse')
+});

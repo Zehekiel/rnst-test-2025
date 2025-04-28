@@ -129,3 +129,25 @@ export async function isUserHaveAnalyseRight(userId: string, analysisId: string 
     }
     return false;
 }
+
+export async function deleteAnalysis(analysisId: string | number) {
+    try{
+        const projectSql = 'DELETE FROM analyses WHERE id = ?';
+        await runAsync(projectSql, [analysisId]);
+        const sql = 'DELETE FROM analysis_policies WHERE project_id = ?';
+        await runAsync(sql, [analysisId]);
+        const sqlRight = 'DELETE FROM rights_analysis WHERE project_id = ?';
+        await runAsync(sqlRight, [analysisId]);
+    } catch (error) {
+        throw new Error(`Erreur lors de la suppression de l'analyse : ${error}`);
+    }
+}
+
+export async function updateAnalysis(analysisId: string, name: string) {
+    try{
+        const sql = 'UPDATE analyses SET name = ? WHERE id = ?';
+        return await runAsync(sql, [name, analysisId]);
+    } catch (error) {
+        throw new Error(`Erreur lors de la mise à jour de l'analyse : ${error}`);
+    }
+}

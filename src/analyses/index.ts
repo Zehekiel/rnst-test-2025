@@ -1,9 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { getAnalysesRoute, getAnalysisRoute, postAnalysisRoute } from '@/analyses/routes'
+import { deleteAnalysisRoute, getAnalysesRoute, getAnalysisRoute, postAnalysisRoute, updateAnalysisRoute } from '@/analyses/routes'
 import { getCookieData, allAsync, controlPermission, getRoleId } from '@/helper'
 import { Analysis } from '@/types'
 import { addUser, getUserRole } from '@/users/helper'
-import { addAnalysis, addAnalysisPolicies, addUserAnalyseRight, getAllAnalysisAllowed, getAnalysis } from './helper'
+import { addAnalysis, addAnalysisPolicies, addUserAnalyseRight, deleteAnalysis, getAllAnalysisAllowed, getAnalysis, updateAnalysis } from './helper'
 import { getProject } from '@/projects/helper'
 
 const analysis = new OpenAPIHono()
@@ -103,5 +103,61 @@ analysis.openapi(getAnalysisRoute, async (c) => {
     })
 })
 
+analysis.openapi(deleteAnalysisRoute, async (c) => {
+    const { projectId, analysisId } = c.req.valid('param')
+    try{
+        const { userId } = await getCookieData(c)
 
+        const havePermission = await controlPermission({userId, projectId, analysisId, action: "update"})
+        if (!havePermission) {
+            return c.json({
+                success: false,
+                message: "Vous n'avez pas accès à cette analyse",
+            }, 403)
+        }
+
+        await deleteAnalysis(analysisId)
+
+        return c.json({
+            success: true,
+            data: "Analyse supprimée avec succès",
+        })
+
+    } catch (error) {
+        console.error("deleteAnalysisRoute error: ", error);
+        return c.json({
+            success: false,
+            message: "Erreur lors de la suppression de l'analyse",
+        }, 500)
+    }
+})
+
+analysis.openapi(updateAnalysisRoute, async (c) => {
+    const { projectId, analysisId } = c.req.valid('param')
+
+    try{
+        const { userId } = await getCookieData(c)
+        const body = c.req.valid('json');
+        const { analysis } = body
+        const { name } = analysis
+        const havePermission = await controlPermission({userId, projectId, analysisId, action: "update"})
+        if (!havePermission) {
+            return c.json({
+                success: false,
+                message: "Vous n'avez pas accès à cette analyse",
+            }, 403)
+        }
+        await updateAnalysis(analysisId, name)
+        return c.json({
+            success: true,
+            data:  `Analyse ${name} modifiée`,
+        })
+    } catch (error) {
+        console.error("updateAnalysisRoute error: ", error);
+        return c.json({
+            success: false,
+            message: "Erreur lors de la modification de l'analyse",
+        }, 500)
+    }
+})
 export default analysis
