@@ -155,9 +155,12 @@ Cette structure assure une gestion centralisée et cohérente des permissions, t
 
 ## Améliorations possibles
 
+- **CI** : Ajouter des tests de bout en bout pour vérifier le bon fonctionnement de l'application dans son ensemble dans l'intégration continue. (ce que j'avais fait mais j'ai eu des problèmes de configuration avec le CI de GitHub et je ne voulais pas perdre trop de temps dessus car les tests fonctionnent correctement en local).
 - **Gestion des erreurs** : Améliorer la gestion des erreurs pour fournir des messages d'erreur plus détaillés et utiles. Ainsi qu'utiliser une bibliothèque de gestion des erreurs pour centraliser la gestion des erreurs dans l'application.
 - **Internationalisation** : Ajouter la prise en charge de plusieurs langues pour l'interface utilisateur et les messages d'erreur.
 - **Tests** : Ajouter des tests unitaires et d'intégration pour couvrir tous les cas d'utilisation de l'application.
+- **Couvertures de code** : Ajouter des outils de couverture de code pour mesurer la couverture des tests et s'assurer que toutes les parties du code sont testées.
+- **Documentation** : Améliorer la documentation de l'API et de l'application pour faciliter la compréhension et l'utilisation de l'application.
 - **Sécurité** : Ajouter des mesures de sécurité supplémentaires, comme la protection contre les attaques CSRF et XSS.
 - **Optimisation des performances** : Optimiser les requêtes SQL pour améliorer les performances de l'application.
 - **Gestion des utilisateurs** : Ajouter la possibilité de gérer les utilisateurs (ajouter, supprimer, modifier) depuis l'interface utilisateur.
