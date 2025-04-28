@@ -1,7 +1,7 @@
 import { createRoute } from '@hono/zod-openapi'
 import { Tags } from '@/constant'
-import { getUserDataResponseSchema, getUserRoleResponseSchema } from './schemas/response'
-import { getUserAuthorizationParamSchema, getUserRoleParamSchema } from './schemas/request'
+import { getUserDataResponseSchema, getUserProjectResponseSchema, getUserRoleResponseSchema } from './schemas/response'
+import { getUserAuthorizationParamSchema, getUserProjectParamSchema, getUserRoleParamSchema } from './schemas/request'
 
 
 export const getCurrentDataRoute = createRoute({
@@ -66,6 +66,30 @@ export const getUserAuthorizationRoute = createRoute({
                 },
             },
             description: 'Rôle de l\'utilisateur',
+        },
+        401: {
+            description: 'Unauthorized',
+        },
+    },
+})
+
+export const getUserProjectRoute = createRoute({
+    method: 'get',
+    path: '/{userId}/project',
+    tags:[Tags.users],
+    description: 'Obtenir les projets qu\'un utilisateur a droit de consulter',
+    summary: 'Obtenir les projets d\'un utilisateur',
+    request: {
+        params: getUserProjectParamSchema,
+    },
+    responses: {
+        200: {
+            content: {
+                'application/json': {
+                    schema: getUserProjectResponseSchema,
+                },
+            },
+            description: 'Projets de l\'utilisateur',
         },
         401: {
             description: 'Unauthorized',

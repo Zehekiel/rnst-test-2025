@@ -16,10 +16,10 @@ const app = new OpenAPIHono()
 app.use(checkCookiesMiddleware)
 
 app.route('/connection', connection);
-app.route('/', analysis);
 app.route('/projects', project);
-app.route('/database', databaseRoute);
+app.route('/', analysis);
 app.route('/users', usersRoute);
+app.route('/database', databaseRoute);
 
 app.doc('/doc', {
     openapi: '3.0.0',

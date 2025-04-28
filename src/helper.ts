@@ -1,5 +1,8 @@
 import database from "@/database";
-import { UserRole } from "./types";
+import { Project, UserRole } from "./types";
+import { cookieName, secret } from "./constant";
+import { getSignedCookie } from "hono/cookie";
+import { Context, Env } from "hono";
 
 // Wrapper pour db.get
 export function getAsync<T = unknown>(sql: string, params?: unknown[]): Promise<T | undefined> {
@@ -85,4 +88,29 @@ export async function isUserAnalyseOwner(userId: string | number, analysisId: st
     `;
     const result = await getAsync<{ is_owner: 0 | 1 }>(sql, [analysisId, userId]);
     return !!result?.is_owner;
+}
+
+export async function getCookieData(context: Context<Env, "/", Record<string, unknown>>) {
+    const cookie = await getSignedCookie(context, secret)
+    const user = cookie[cookieName] || '{}'
+    const userId = JSON.parse(user).id
+    const userName = JSON.parse(user).name
+    return { userId, userName }
+}
+
+export async function getAllProjectAllow(userId: string): Promise<Project[]> {
+    const params: unknown[] = [];
+    const sql = `
+            SELECT p.id, p.name, p.owner_id
+            FROM projects p
+            WHERE p.owner_id = ?
+            UNION
+            SELECT p.id, p.name, p.owner_id
+            FROM projects p
+            JOIN rights_project rp ON p.id = rp.project_id
+            WHERE rp.user_id = ?
+        `;
+        params.push(userId, userId); // Add userId twice for the UNION query
+        const projects = await allAsync<Project>(sql, params);
+        return projects
 }

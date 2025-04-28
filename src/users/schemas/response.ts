@@ -6,7 +6,7 @@ export const getUserDataResponseSchema = z.object({
     data: z.object({
         id: z.number().describe("ID de l'utilisateur"),
         name: z.string().describe("Nom de l'utilisateur"),
-    }).describe("Message de confirmation d'initialisation de la base de données"),
+    }).describe("Données de l'utilisateur"),
 });
 
 export const getUserRoleResponseSchema = z.object({
@@ -17,4 +17,13 @@ export const getUserRoleResponseSchema = z.object({
 export const getUserAuthorizationResponseSchema = z.object({
     success: z.boolean(),
     data: z.boolean().describe("Autorisation de l'utilisateur pour l'action demandée"),
+});
+
+export const getUserProjectResponseSchema = z.object({
+    success: z.boolean(),
+    data: z.array(z.object({
+        id: z.number().describe("ID du projet"),
+        name: z.string().describe("Nom du projet"),
+        owner_id: z.number().describe("ID de l'utilisateur propriétaire du projet"),
+    })).describe("Tableau de projets de l'utilisateur"),
 });

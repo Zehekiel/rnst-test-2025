@@ -7,7 +7,6 @@ export const getProjectsRoute = createRoute({
     method: 'get',
     path: '/',
     tags:[Tags.project],
-
     description: 'Récupérer tous les projets dans la base de données accessible par l’utilisateur connecté.',
     summary: 'Récupérer tous les projets',
     responses: {

@@ -1,9 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { getCurrentDataRoute, getUserAuthorizationRoute, getUserRoleRoute } from './route'
+import { getCurrentDataRoute, getUserAuthorizationRoute, getUserProjectRoute, getUserRoleRoute } from './route'
 import { getSignedCookie } from 'hono/cookie';
 import { cookieName, secret } from '@/constant';
-import { getAsync, getUserRole, isUserAnalyseOwner, isUserProjectOwner } from '@/helper';
-import { User, UserRole } from '@/types';
+import { allAsync, getAllProjectAllow, getAsync, getUserRole, isUserAnalyseOwner, isUserProjectOwner } from '@/helper';
+import { Project, User, UserRole } from '@/types';
 
 const usersRoute = new OpenAPIHono()
 
@@ -117,5 +117,35 @@ usersRoute.openapi(getUserAuthorizationRoute    , async (c) => {
     }, 500)
 })
 
+usersRoute.openapi(getUserProjectRoute, async (c) => {
+    try{
+        const userId = c.req.param('userId')
+        const userRole = await getUserRole(userId, "0");
+
+
+        if (userRole === "admin") {
+            const allProjectSql = 'SELECT * FROM projects';
+            const allProjects = await allAsync<Project>(allProjectSql);
+
+            return c.json({
+                success: true,
+                data:  allProjects,
+            })
+        }
+
+        const projects = await getAllProjectAllow(userId);
+
+        return c.json({
+            success: true,
+            data:  projects,
+        })
+    } catch (error) {
+        console.error(error);
+        return c.json({
+            success: false,
+            message: "Erreur lors de la récupération des projets",
+        }, 500)
+    }
+})
 export default usersRoute;
 
