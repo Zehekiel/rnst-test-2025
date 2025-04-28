@@ -31,9 +31,9 @@ export const getUserProjectResponseSchema = z.object({
 export const getUserAnalyseResponseSchema = z.object({
     success: z.boolean(),
     data: z.array(z.object({
-        id: z.number().describe("ID du projet"),
-        name: z.string().describe("Nom du projet"),
-        project_id: z.number().describe("ID du projet"),
-        owner_id: z.number().describe("ID de l'utilisateur propriétaire du projet"),
-    })).describe("Tableau de projets de l'utilisateur"),
+        id: z.number().describe("ID de l'analyse"),
+        name: z.string().describe("Nom de l'analyse"),
+        project_id: z.number().describe("ID du projet associé à l'analyse"),
+        owner_id: z.number().describe("ID de l'utilisateur propriétaire de l'analyse"),
+    })).describe("Tableau d'analyses de l'utilisateur"),
 });
